@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary colors from the palette */
+  --background: #080c0f; /* Dark background */
+  --foreground: #dadada; /* Light text */
+
+  /* Color palette variables - Updated from the image */
+  --dark-forest: #080c0f; /* Darkest background */
+  --forest-green: #b9a074; /* Beige/tan tone */
+  --sage-green: #c9d1a0; /* Light green */
+  --warm-gold: #cc9e36; /* Golden orange */
+  --earth-brown: #dadada; /* Light gray */
+  --warm-gray: #ffe689; /* Light yellow */
+  --soft-yellow: #ffca2a; /* Bright yellow */
+  --bright-orange: #ffff9f; /* Very light yellow */
+
+  /* Semantic colors */
+  --primary: var(--warm-gold);
+  --secondary: var(--sage-green);
+  --accent: var(--soft-yellow);
+  --muted: var(--forest-green);
+  --border: var(--earth-brown);
+  --card: rgba(185, 160, 116, 0.1); /* Translucent beige */
+  --destructive: #dc2626;
+  --success: var(--sage-green);
+  --warning: var(--soft-yellow);
+  --info: var(--earth-brown);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Primary color variants */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--foreground);
+
+  /* Secondary color variants */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+
+  /* Accent color variants */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--foreground);
+
+  /* Muted color variants */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--foreground);
+
+  /* Card variants */
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+
+  /* Border and other semantic colors */
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  /* Individual palette colors - Updated with correct hex codes */
+  --color-dark-forest: #080c0f;
+  --color-forest-green: #b9a074;
+  --color-sage-green: #c9d1a0;
+  --color-warm-gold: #cc9e36;
+  --color-earth-brown: #dadada;
+  --color-warm-gray: #ffe689;
+  --color-soft-yellow: #ffca2a;
+  --color-bright-orange: #ffff9f;
+
+  /* Font families */
+  --font-sans: var(--font-playfair-display), "Playfair Display", serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
+    "DejaVu Sans Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
