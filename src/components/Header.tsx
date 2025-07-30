@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { Menu, X } from "lucide-react";
@@ -8,6 +8,18 @@ import Image from "next/image";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -21,7 +33,11 @@ const Header = () => {
   ];
 
   return (
-    <header className="w-full sticky top-0 bg-background/50 backdrop-blur-lg border-b border-border/20 z-50">
+    <header
+      className={`w-full fixed top-0 z-50 transition-all ${
+        isMenuOpen ? "bg-background/80 backdrop-blur-lg" : ""
+      } ${isScrolled ? "bg-background/50 backdrop-blur-lg" : ""}`}
+    >
       <div className="my-container">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
