@@ -1,9 +1,16 @@
-const layout = ({
+import Header from "@/components/Header";
+
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  return <div>{children}</div>;
+  return (
+    <>
+      <Header />
+      {children}
+    </>
+  );
 };
 
-export default layout;
+export default RootLayout;

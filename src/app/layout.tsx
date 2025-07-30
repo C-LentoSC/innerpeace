@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: "Find your inner peace",
 };
 
-export default function RootLayout({
+export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -29,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <main>{children}</main>
       </body>
     </html>
   );
