@@ -21,8 +21,8 @@ const Header = () => {
   ];
 
   return (
-    <header className="w-full bg-background border-b border-border/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="w-full sticky top-0 bg-background/50 backdrop-blur-lg border-b border-border/20 z-50">
+      <div className="my-container">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <div className="flex items-center">
@@ -69,7 +69,7 @@ const Header = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMenu}
-            className="lg:hidden p-2 text-foreground hover:text-warm-gold transition-colors duration-200"
+            className="lg:hidden text-foreground hover:text-warm-gold transition-colors duration-200"
             aria-label="Toggle menu"
           >
             {isMenuOpen ? (

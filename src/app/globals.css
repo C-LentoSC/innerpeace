@@ -94,3 +94,11 @@ body {
 .innerpeace-gradient1 {
   background: linear-gradient(135deg, var(--warm-gray), var(--soft-yellow));
 }
+
+.my-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.gradient-text1 {
+  @apply bg-gradient-to-b from-warm-gray to-soft-yellow bg-clip-text text-transparent py-2;
+}
