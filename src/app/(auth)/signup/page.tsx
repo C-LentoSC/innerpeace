@@ -13,6 +13,7 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
+import { Button } from "@/components/Button";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -255,12 +256,9 @@ const SignUp = () => {
             {/* Signup Button - Full width across both columns */}
             <div className="pt-6 lg:col-span-2">
               <div className="max-w-md mx-auto">
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-b from-warm-gray to-soft-yellow text-background font-medium py-3 px-4 rounded-md transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
-                >
+                <Button type="submit" fullWidth>
                   Create Account
-                </button>
+                </Button>
               </div>
             </div>
           </form>

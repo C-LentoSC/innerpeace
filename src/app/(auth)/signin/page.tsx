@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/Button";
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -109,12 +110,9 @@ const SignIn = () => {
 
             {/* Login Button */}
             <div className="pt-4">
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-b from-warm-gray to-soft-yellow text-background font-medium py-3 px-4 rounded-md transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
-              >
+              <Button type="submit" fullWidth>
                 Login
-              </button>
+              </Button>
             </div>
           </form>
 
