@@ -3,7 +3,7 @@ import Image from "next/image";
 
 const HeroSection = () => {
   return (
-    <div className=" pt-16 lg:pt-20">
+    <section className=" pt-16 lg:pt-20">
       <div className=" my-container py-20">
         <div className="flex flex-col justify-center max-w-4xl mx-auto">
           <div className="flex">
@@ -41,7 +41,7 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
