@@ -10,7 +10,7 @@ const SecanderySection = () => {
             Japanese Head Message for Ultra Rexlation
           </div>
 
-          <div className=" flex items-center justify-center aspect-video relative rounded-md overflow-hidden mt-10">
+          <div className=" flex items-center justify-center aspect-[9/16] sm:aspect-square md:aspect-video relative rounded-md overflow-hidden mt-10">
             <Image
               src={"/assets/images/2.jpg"}
               alt="Japanese Head Message for Ultra Relaxation"

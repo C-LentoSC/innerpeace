@@ -1,6 +1,7 @@
 import HeroSection from "./HeroSection";
 import Image from "next/image";
 import SecanderySection from "./SecanderySection";
+import PackagesSection from "./PackagesSection";
 
 const HomePage = () => {
   return (
@@ -21,6 +22,8 @@ const HomePage = () => {
       <HeroSection />
 
       <SecanderySection />
+
+      <PackagesSection />
 
       <div className=" min-h-screen"></div>
       <div className=" min-h-screen"></div>
