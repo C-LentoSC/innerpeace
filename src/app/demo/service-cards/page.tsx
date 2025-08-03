@@ -3,43 +3,43 @@ import Link from "next/link";
 import { Button } from "@/components/Button";
 import { ArrowLeft } from "lucide-react";
 
-const ServiceCardDemoPage = () => {
-  const demoServices = [
-    {
-      id: 1,
-      title: "The Inner Peace Ritual",
-      description:
-        "Deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility. Experience the profound benefits of our special treatment.",
-      price: "5,000",
-      duration: "1 Hour 20 Minutes",
-      image: "/assets/images/1.jpg",
-      imageAlt: "The Inner Peace Ritual",
-      serviceId: "demo-inner-peace",
-    },
-    {
-      id: 2,
-      title: "Serenity Body Treatment",
-      description:
-        "Full body relaxation therapy combining ancient techniques with modern wellness practices for complete rejuvenation and healing.",
-      price: "7,500",
-      duration: "2 Hours 30 Minutes",
-      image: "/assets/images/2.jpg",
-      imageAlt: "Serenity Body Treatment",
-      serviceId: "demo-serenity",
-    },
-    {
-      id: 3,
-      title: "Mindful Meditation Session",
-      description:
-        "Guided meditation experience with sound therapy and aromatherapy to restore mental balance, clarity, and inner peace.",
-      price: "3,500",
-      duration: "1 Hour",
-      image: "/assets/images/1.jpg",
-      imageAlt: "Mindful Meditation Session",
-      serviceId: "demo-meditation",
-    },
-  ];
+export const DEMO_SERVICES = [
+  {
+    id: 1,
+    title: "The Inner Peace Ritual",
+    description:
+      "Deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility. Experience the profound benefits of our special treatment.",
+    price: "5,000",
+    duration: "1 Hour 20 Minutes",
+    image: "/assets/images/1.jpg",
+    imageAlt: "The Inner Peace Ritual",
+    serviceId: "demo-inner-peace",
+  },
+  {
+    id: 2,
+    title: "Serenity Body Treatment",
+    description:
+      "Full body relaxation therapy combining ancient techniques with modern wellness practices for complete rejuvenation and healing.",
+    price: "7,500",
+    duration: "2 Hours 30 Minutes",
+    image: "/assets/images/2.jpg",
+    imageAlt: "Serenity Body Treatment",
+    serviceId: "demo-serenity",
+  },
+  {
+    id: 3,
+    title: "Mindful Meditation Session",
+    description:
+      "Guided meditation experience with sound therapy and aromatherapy to restore mental balance, clarity, and inner peace.",
+    price: "3,500",
+    duration: "1 Hour",
+    image: "/assets/images/1.jpg",
+    imageAlt: "Mindful Meditation Session",
+    serviceId: "demo-meditation",
+  },
+];
 
+const ServiceCardDemoPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground py-16 px-8">
       <div className="max-w-6xl mx-auto">
@@ -68,7 +68,7 @@ const ServiceCardDemoPage = () => {
             Alternating Alignment (Production Usage)
           </h2>
 
-          {demoServices.map((service, index) => (
+          {DEMO_SERVICES.map((service, index) => (
             <ServiceCard
               key={service.id}
               title={service.title}

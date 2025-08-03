@@ -7,7 +7,9 @@ import Image from "next/image";
 import { Button } from "@/components/Button";
 
 const serviceCardVariants = cva(
-  "flex gap-6 p-6 bg-card/40 backdrop-blur-sm rounded-xl border border-border/20 hover:border-warm-gold/30 transition-all duration-300 hover:shadow-lg",
+  // "flex gap-6 p-6 bg-card/40 backdrop-blur-sm rounded-xl border border-border/20 hover:border-warm-gold/30 transition-all duration-300 hover:shadow-lg",
+  "flex gap-6 rounded-xl hover:border-warm-gold/30 transition-all duration-300",
+
   {
     variants: {
       alignment: {
@@ -86,7 +88,7 @@ const ServiceCard = React.forwardRef<HTMLDivElement, ServiceCardProps>(
         {...props}
       >
         {/* Image Section */}
-        <div className="relative flex-shrink-0 w-full md:w-64 h-48 md:h-full rounded-lg overflow-hidden">
+        <div className="relative flex-shrink-0 w-full md:w-64 h-48 md:h-auto md:aspect-[9/12] aspect-video rounded-lg overflow-hidden">
           <Image
             src={image}
             alt={imageAlt}
@@ -97,14 +99,18 @@ const ServiceCard = React.forwardRef<HTMLDivElement, ServiceCardProps>(
           />
 
           {/* Duration Badge */}
-          <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-md">
+          <div className="absolute top-4 left-4 bg-background/50 backdrop-blur-xl px-3 py-1 rounded-md">
             <p className="text-xs text-muted-foreground mb-1">Duration</p>
             <p className="text-sm font-medium text-foreground">{duration}</p>
           </div>
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 flex flex-col justify-between py-2">
+        <div
+          className={`flex-1 flex flex-col justify-between py-2 ${
+            alignment === "right" ? "md:ml-32 lg:ml-44" : "md:mr-32 lg:mr-44"
+          }`}
+        >
           <div className="space-y-4">
             {/* Title */}
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
