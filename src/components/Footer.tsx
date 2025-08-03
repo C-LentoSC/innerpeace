@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { FOOTER_DATA } from "@/constants/data";
 
 const Footer = () => {
   return (
@@ -39,118 +40,79 @@ const Footer = () => {
               {/* Tagline */}
               <div className="space-y-2">
                 <h3 className="text-2xl md:text-3xl font-medium text-foreground leading-tight">
-                  Where Tranquility
+                  {FOOTER_DATA.tagline.line1}
                 </h3>
                 <h3 className="text-2xl md:text-3xl font-medium text-foreground leading-tight">
-                  Meets Elegance
+                  {FOOTER_DATA.tagline.line2}
                 </h3>
               </div>
             </div>
 
             {/* Main Links */}
             <div className="space-y-6">
-              <h4 className="text-xl font-medium text-foreground">Main</h4>
+              <h4 className="text-xl font-medium text-foreground">
+                {FOOTER_DATA.sections.main.title}
+              </h4>
               <ul className="space-y-3">
-                <li>
-                  <Link
-                    href="/"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/gallery"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Gallery
-                  </Link>
-                </li>
+                {FOOTER_DATA.sections.main.links.map((link, index) => (
+                  <li key={index}>
+                    <Link
+                      href={link.href}
+                      className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
             {/* Pages Links */}
             <div className="space-y-6">
-              <h4 className="text-xl font-medium text-foreground">Pages</h4>
+              <h4 className="text-xl font-medium text-foreground">
+                {FOOTER_DATA.sections.pages.title}
+              </h4>
               <ul className="space-y-3">
-                <li>
-                  <Link
-                    href="/login"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/bookings"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Bookings
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/create-account"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Create Account
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/questions"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Questions
-                  </Link>
-                </li>
+                {FOOTER_DATA.sections.pages.links.map((link, index) => (
+                  <li key={index}>
+                    <Link
+                      href={link.href}
+                      className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
             {/* Social Links */}
             <div className="space-y-6">
-              <h4 className="text-xl font-medium text-foreground">Socials</h4>
+              <h4 className="text-xl font-medium text-foreground">
+                {FOOTER_DATA.sections.socials.title}
+              </h4>
               <ul className="space-y-3">
-                <li>
-                  <a
-                    href="https://facebook.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://wa.me/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    WhatsApp
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                  >
-                    Instagram
-                  </a>
-                </li>
+                {FOOTER_DATA.sections.socials.links.map((link, index) => (
+                  <li key={index}>
+                    {link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -161,7 +123,7 @@ const Footer = () => {
               <p className="text-sm text-muted-foreground">
                 Designed and Developed by{" "}
                 <span className="text-warm-gold font-medium">
-                  C - Lento Software Solutions
+                  {FOOTER_DATA.footer.companyCredit}
                 </span>
               </p>
             </div>
