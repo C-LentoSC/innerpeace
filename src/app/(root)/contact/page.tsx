@@ -1,5 +1,6 @@
 import HeroSection from "./HeroSection";
 import ContactFormSection from "./ContactFormSection";
+import MapSection from "./MapSection";
 import Image from "next/image";
 
 const ContactPage = () => {
@@ -34,6 +35,7 @@ const ContactPage = () => {
       </div>
       <HeroSection />
       <ContactFormSection />
+      <MapSection />
     </div>
   );
 };
