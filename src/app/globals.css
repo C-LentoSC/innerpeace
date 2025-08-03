@@ -102,3 +102,11 @@ body {
 .gradient-text1 {
   @apply bg-gradient-to-b from-warm-gray to-soft-yellow bg-clip-text text-transparent py-2;
 }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
