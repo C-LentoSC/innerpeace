@@ -6,6 +6,7 @@ import VideoSection from "./VideoSection";
 import GallerySection from "./GallerySection";
 import ReviewsSections from "./ReviewsSections";
 import FAQSection from "./FAQSection";
+import ContactSection from "./ContactSection";
 
 const HomePage = () => {
   return (
@@ -52,6 +53,8 @@ const HomePage = () => {
       <ReviewsSections />
 
       <FAQSection />
+
+      <ContactSection />
 
       <div className=" min-h-screen"></div>
       <div className=" min-h-screen"></div>
