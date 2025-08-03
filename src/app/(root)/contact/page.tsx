@@ -1,28 +1,37 @@
-import { Button } from "@/components/Button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import HeroSection from "./HeroSection";
+import Image from "next/image";
 
 const ContactPage = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground py-16 px-8">
-      <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-5xl font-bold text-warm-gold mb-6">Contact Us</h1>
-        <p className="text-lg text-foreground mb-8 leading-relaxed">
-          Get in touch with us to start your journey towards inner peace and
-          wellness.
-        </p>
-        <div className="text-muted-foreground mb-8">
-          <p>Contact information coming soon...</p>
-        </div>
-        <Link href="/">
-          <Button
-            variant="outline"
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
-          >
-            Back to Home
-          </Button>
-        </Link>
+    <div className="flex flex-col w-full relative overflow-hidden">
+      {/* Background Image - Always at the bottom */}
+      <div className="absolute w-full -z-10">
+        <Image
+          src={"/assets/bg1.png"}
+          alt="Background Image"
+          className="w-full h-full object-cover"
+          width={1920}
+          height={1080}
+          priority
+        />
+        <Image
+          src={"/assets/bg2.png"}
+          alt="Background Image"
+          className="w-full h-full object-cover"
+          width={1000}
+          height={1080}
+          priority
+        />
+        <Image
+          src={"/assets/bg3.png"}
+          alt="Background Image"
+          className="w-full h-full object-cover"
+          width={1920}
+          height={1080}
+          priority
+        />
       </div>
+      <HeroSection />
     </div>
   );
 };
