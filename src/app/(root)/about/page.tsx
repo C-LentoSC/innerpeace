@@ -1,5 +1,6 @@
 import Image from "next/image";
 import HeroSection from "./HeroSection";
+import MeetOurTeamSection from "./MeetOurTeamSection";
 
 const AboutPage = () => {
   return (
@@ -32,6 +33,7 @@ const AboutPage = () => {
         />
       </div>
       <HeroSection />
+      <MeetOurTeamSection />
     </div>
   );
 };
