@@ -231,7 +231,11 @@ const PackagesPage = () => {
                       <span className="text-lg sm:text-xl font-medium text-warm-gold">
                         {pkg.price}
                       </span>
-                      <Button variant="default" size="sm" className="px-4 sm:px-6">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="px-4 sm:px-6"
+                      >
                         Book now
                       </Button>
                     </div>
