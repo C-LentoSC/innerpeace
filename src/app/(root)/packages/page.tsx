@@ -167,14 +167,14 @@ const PackagesPage = () => {
           </div>
 
           {/* Category Tabs and Search */}
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-6">
             {/* Category Tabs */}
-            <div className="flex space-x-1">
+            <div className="flex space-x-2 w-full sm:w-auto justify-center sm:justify-start">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex-1 sm:flex-none ${
                     activeCategory === category
                       ? "bg-gradient-to-r from-warm-gold to-soft-yellow text-background"
                       : "bg-card text-foreground hover:bg-muted"
@@ -186,28 +186,28 @@ const PackagesPage = () => {
             </div>
 
             {/* Search */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-card border border-border/20 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all duration-200 w-64"
+                className="pl-10 pr-4 py-2 bg-card border border-border/20 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all duration-200 w-full sm:w-64"
               />
             </div>
           </div>
 
           {/* Packages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-16">
             {paginatedPackages.map((pkg) => (
               <div
                 key={pkg.id}
-                className="bg-card border border-border/10 rounded-lg overflow-hidden hover:border-border/30 transition-all duration-300 group"
+                className="bg-card/80 backdrop-blur-sm border border-border/20 rounded-2xl overflow-hidden hover:border-border/40 hover:bg-card/90 transition-all duration-300 group shadow-lg"
               >
-                <div className="flex">
+                <div className="flex flex-col sm:flex-row h-auto sm:h-48">
                   {/* Image */}
-                  <div className="w-48 h-32 relative flex-shrink-0">
+                  <div className="w-full sm:w-2/5 h-48 sm:h-full relative flex-shrink-0">
                     <Image
                       src={pkg.image}
                       alt={pkg.name}
@@ -217,21 +217,21 @@ const PackagesPage = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 p-6 flex flex-col justify-between">
+                  <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
                     <div>
-                      <h3 className="text-lg font-medium text-foreground mb-2">
+                      <h3 className="text-lg sm:text-xl font-medium text-foreground mb-2 sm:mb-3 leading-tight">
                         {pkg.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
                         {pkg.description}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-medium text-warm-gold">
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-lg sm:text-xl font-medium text-warm-gold">
                         {pkg.price}
                       </span>
-                      <Button variant="default" size="sm">
+                      <Button variant="default" size="sm" className="px-4 sm:px-6">
                         Book now
                       </Button>
                     </div>
