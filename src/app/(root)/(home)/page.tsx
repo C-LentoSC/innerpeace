@@ -10,7 +10,7 @@ import ContactSection from "./ContactSection";
 
 const HomePage = () => {
   return (
-    <div className="flex flex-col w-full relative">
+    <div className="flex flex-col w-full relative overflow-hidden">
       {/* Background Image - Always at the bottom */}
       <div className="absolute w-full -z-10">
         <Image
@@ -55,12 +55,6 @@ const HomePage = () => {
       <FAQSection />
 
       <ContactSection />
-
-      <div className=" min-h-screen"></div>
-      <div className=" min-h-screen"></div>
-      <div className=" min-h-screen"></div>
-      <div className=" min-h-screen"></div>
-      <div className=" min-h-screen"></div>
     </div>
   );
 };

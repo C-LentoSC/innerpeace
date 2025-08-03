@@ -42,10 +42,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <Link
-              href="/"
-              className="text-2xl lg:text-3xl font-bold text-warm-gold hover:text-soft-yellow transition-colors duration-200"
-            >
+            <Link href="/" className="">
               <Image
                 src="/assets/white-logo.svg"
                 alt="InnerPeace Logo"
