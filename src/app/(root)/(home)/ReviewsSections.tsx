@@ -123,7 +123,7 @@ const ReviewsSections = () => {
                 {/* Review Text */}
                 <div className="text-center mb-12">
                   <p className="text-foreground text-lg md:text-xl leading-relaxed font-normal tracking-wide min-h-[200px] flex items-center justify-center">
-                    "{currentReview.text}"
+                    &ldquo;{currentReview.text}&rdquo;
                   </p>
                 </div>
 

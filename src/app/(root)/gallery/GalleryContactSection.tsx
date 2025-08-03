@@ -1,6 +1,3 @@
-import Link from "next/link";
-import { Button } from "@/components/Button";
-import { ArrowRight, Phone, Mail, MapPin } from "lucide-react";
 import Image from "next/image";
 
 const GalleryContactSection = () => {

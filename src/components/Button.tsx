@@ -82,6 +82,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant,
       size,
       fullWidth,
+      // asChild param is reserved for future use
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       asChild = false,
       loading = false,
       leftIcon,

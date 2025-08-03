@@ -56,6 +56,7 @@ const ServiceCard = React.forwardRef<HTMLDivElement, ServiceCardProps>(
       imageAlt,
       bookingUrl,
       contactUrl,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       serviceId,
       className,
       ...props

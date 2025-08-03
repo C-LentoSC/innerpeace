@@ -161,8 +161,8 @@ const PackagesPage = () => {
             </h1>
             <p className="text-sm lg:text-base max-w-3xl mx-auto leading-relaxed">
               We give our customers a exclusive range of packages to please
-              their need as to their liking now let's have a look on what you
-              love the most.
+              their need as to their liking now let&apos;s have a look on what
+              you love the most.
             </p>
           </div>
 

@@ -71,7 +71,7 @@ const Header = () => {
           {/* CTA Section - Desktop */}
           <div className="hidden lg:flex items-center gap-4">
             <Link href="/signup" className="text-foreground text-sm">
-              Don't have an account?
+              Don&apos;t have an account?
             </Link>
             <Link href="/signin">
               <Button variant="default" size="sm">
@@ -119,7 +119,7 @@ const Header = () => {
                   href="/signup"
                   className="text-foreground text-sm cursor-pointer"
                 >
-                  Don't have an account?
+                  Don&apos;t have an account?
                 </Link>
                 <Link href="/signin" onClick={() => setIsMenuOpen(false)}>
                   <Button
