@@ -1,5 +1,5 @@
-import { DEMO_SERVICES } from "@/app/demo/service-cards/page";
 import { ServiceCard } from "@/components/ServiceCard";
+import { DEMO_SERVICES } from "@/constants/data";
 import Image from "next/image";
 
 const PackagesSection = () => {
