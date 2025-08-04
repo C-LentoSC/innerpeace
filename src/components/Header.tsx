@@ -95,7 +95,7 @@ const Header = () => {
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out ${
             isMenuOpen
-              ? "max-h-96 opacity-100 py-4"
+              ? "opacity-100 py-4"
               : "max-h-0 opacity-0 overflow-hidden"
           }`}
         >
