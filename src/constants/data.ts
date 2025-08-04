@@ -40,3 +40,9 @@ export const FOOTER_DATA = {
     companyCredit: "C - Lento Software Solutions",
   },
 };
+
+export const CURRENCY = {
+  symbol: "$",
+  code: "AUD",
+  name: "Australian Dollar",
+};

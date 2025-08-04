@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/Button";
 import { Search } from "lucide-react";
+import { CURRENCY } from "@/constants/data";
 
 const PackagesPage = () => {
   const [activeCategory, setActiveCategory] = useState("Category 1");
@@ -16,7 +17,7 @@ const PackagesPage = () => {
       name: "The Inner Peace Ritual",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 5,000",
+      price: "5,000",
       image: "/assets/images/1.jpg",
       category: "Category 1",
     },
@@ -25,7 +26,7 @@ const PackagesPage = () => {
       name: "Deep Oil bath",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 8,900",
+      price: "8,900",
       image: "/assets/images/2.jpg",
       category: "Category 1",
     },
@@ -34,7 +35,7 @@ const PackagesPage = () => {
       name: "The Inner Peace Ritual",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 5,000",
+      price: "5,000",
       image: "/assets/images/3.jpg",
       category: "Category 1",
     },
@@ -43,7 +44,7 @@ const PackagesPage = () => {
       name: "Deep Oil bath",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 8,900",
+      price: "8,900",
       image: "/assets/images/4.jpg",
       category: "Category 1",
     },
@@ -52,7 +53,7 @@ const PackagesPage = () => {
       name: "The Inner Peace Ritual",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 5,000",
+      price: "5,000",
       image: "/assets/images/5.png",
       category: "Category 1",
     },
@@ -61,7 +62,7 @@ const PackagesPage = () => {
       name: "Deep Oil bath",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 8,900",
+      price: "8,900",
       image: "/assets/images/6.jpg",
       category: "Category 1",
     },
@@ -70,7 +71,7 @@ const PackagesPage = () => {
       name: "The Inner Peace Ritual",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 5,000",
+      price: "5,000",
       image: "/assets/images/1.jpg",
       category: "Category 1",
     },
@@ -79,7 +80,7 @@ const PackagesPage = () => {
       name: "Deep Oil bath",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 8,900",
+      price: "8,900",
       image: "/assets/images/2.jpg",
       category: "Category 1",
     },
@@ -88,7 +89,7 @@ const PackagesPage = () => {
       name: "The Inner Peace Ritual",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 5,000",
+      price: "5,000",
       image: "/assets/images/3.jpg",
       category: "Category 1",
     },
@@ -97,7 +98,7 @@ const PackagesPage = () => {
       name: "Deep Oil bath",
       description:
         "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "Rs 8,900",
+      price: "8,900",
       image: "/assets/images/4.jpg",
       category: "Category 1",
     },
@@ -229,7 +230,7 @@ const PackagesPage = () => {
 
                     <div className="flex items-center justify-between mt-auto">
                       <span className="text-lg sm:text-xl font-medium text-warm-gold">
-                        {pkg.price}
+                        {CURRENCY.symbol} {pkg.price}
                       </span>
                       <Button
                         variant="default"

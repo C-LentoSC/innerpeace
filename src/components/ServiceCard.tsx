@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Button } from "@/components/Button";
+import { CURRENCY } from "@/constants/data";
 
 const serviceCardVariants = cva(
   // "flex gap-6 p-6 bg-card/40 backdrop-blur-sm rounded-xl border border-border/20 hover:border-warm-gold/30 transition-all duration-300 hover:shadow-lg",
@@ -128,7 +129,9 @@ const ServiceCard = React.forwardRef<HTMLDivElement, ServiceCardProps>(
           <div className="space-y-4 mt-6">
             {/* Price */}
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-medium text-foreground">Rs</span>
+              <span className="text-lg font-medium text-foreground">
+                {CURRENCY.symbol}{" "}
+              </span>
               <span className="text-2xl lg:text-3xl font-bold text-warm-gold">
                 {price}
               </span>
