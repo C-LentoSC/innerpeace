@@ -14,10 +14,18 @@ import {
   MapPin,
 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { useRouter } from "next/navigation";
+import { signUpSchema, type SignUpFormData } from "@/lib/validations";
+import { ZodError } from "zod";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -36,6 +44,69 @@ const SignUp = () => {
       ...prev,
       [name]: value,
     }));
+
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrors({});
+    setGeneralError("");
+
+    try {
+      // Validate form data
+      const validatedData = signUpSchema.parse(formData);
+
+      // Send to API
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validatedData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.issues) {
+          // Handle validation errors
+          const newErrors: Record<string, string> = {};
+          data.issues.forEach((issue: { field: string; message: string }) => {
+            newErrors[issue.field] = issue.message;
+          });
+          setErrors(newErrors);
+        } else {
+          setGeneralError(data.error || "An error occurred during signup");
+        }
+        return;
+      }
+
+      // Success - redirect to signin page
+      router.push(
+        "/signin?message=Account created successfully. Please sign in."
+      );
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.issues.forEach((issue) => {
+          const field = issue.path.join(".");
+          newErrors[field] = issue.message;
+        });
+        setErrors(newErrors);
+      } else {
+        setGeneralError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,7 +147,13 @@ const SignUp = () => {
           </h1>
 
           {/* Form */}
-          <form className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* General Error Message */}
+            {generalError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm mb-4">
+                {generalError}
+              </div>
+            )}
             {/* Two Column Layout for Large Screens */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column */}
@@ -96,9 +173,14 @@ const SignUp = () => {
                       value={formData.firstName}
                       onChange={handleInputChange}
                       placeholder="Enter First Name"
-                      className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all"
+                      className={`w-full pl-10 pr-4 py-3 bg-background border ${
+                        errors.firstName ? "border-red-500" : "border-border"
+                      } rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all`}
                     />
                   </div>
+                  {errors.firstName && (
+                    <p className="text-red-500 text-sm">{errors.firstName}</p>
+                  )}
                 </div>
 
                 {/* Email Field */}
@@ -116,9 +198,14 @@ const SignUp = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Enter Your Email"
-                      className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all"
+                      className={`w-full pl-10 pr-4 py-3 bg-background border ${
+                        errors.email ? "border-red-500" : "border-border"
+                      } rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all`}
                     />
                   </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-sm">{errors.email}</p>
+                  )}
                 </div>
 
                 {/* Address Field */}
@@ -156,7 +243,9 @@ const SignUp = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Enter Your Password"
-                      className="w-full pl-10 pr-12 py-3 bg-background border border-border rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all"
+                      className={`w-full pl-10 pr-12 py-3 bg-background border ${
+                        errors.password ? "border-red-500" : "border-border"
+                      } rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all`}
                     />
                     <button
                       type="button"
@@ -170,6 +259,9 @@ const SignUp = () => {
                       )}
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-sm">{errors.password}</p>
+                  )}
                 </div>
               </div>
 
@@ -190,9 +282,14 @@ const SignUp = () => {
                       value={formData.lastName}
                       onChange={handleInputChange}
                       placeholder="Enter Last Name"
-                      className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all"
+                      className={`w-full pl-10 pr-4 py-3 bg-background border ${
+                        errors.lastName ? "border-red-500" : "border-border"
+                      } rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all`}
                     />
                   </div>
+                  {errors.lastName && (
+                    <p className="text-red-500 text-sm">{errors.lastName}</p>
+                  )}
                 </div>
 
                 {/* Mobile Number Field */}
@@ -210,9 +307,16 @@ const SignUp = () => {
                       value={formData.mobileNumber}
                       onChange={handleInputChange}
                       placeholder="Enter Your Mobile Number"
-                      className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all"
+                      className={`w-full pl-10 pr-4 py-3 bg-background border ${
+                        errors.mobileNumber ? "border-red-500" : "border-border"
+                      } rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all`}
                     />
                   </div>
+                  {errors.mobileNumber && (
+                    <p className="text-red-500 text-sm">
+                      {errors.mobileNumber}
+                    </p>
+                  )}
                 </div>
 
                 {/* Confirm Password Field */}
@@ -230,7 +334,11 @@ const SignUp = () => {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="Confirm Your Password"
-                      className="w-full pl-10 pr-12 py-3 bg-background border border-border rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all"
+                      className={`w-full pl-10 pr-12 py-3 bg-background border ${
+                        errors.confirmPassword
+                          ? "border-red-500"
+                          : "border-border"
+                      } rounded-md text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all`}
                     />
                     <button
                       type="button"
@@ -246,6 +354,11 @@ const SignUp = () => {
                       )}
                     </button>
                   </div>
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
                 </div>
 
                 {/* Empty space to balance the layout */}
@@ -256,8 +369,8 @@ const SignUp = () => {
             {/* Signup Button - Full width across both columns */}
             <div className="pt-6 lg:col-span-2">
               <div className="max-w-md mx-auto">
-                <Button type="submit" fullWidth>
-                  Create Account
+                <Button type="submit" fullWidth disabled={isLoading}>
+                  {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
               </div>
             </div>

@@ -5,10 +5,13 @@ import Link from "next/link";
 import { Button } from "@/components/Button";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
+import UserNav from "@/components/UserNav";
+import { useSession } from "next-auth/react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +34,7 @@ const Header = () => {
     { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
     { label: "Packages", href: "/packages" },
+    ...(session ? [{ label: "Dashboard", href: "/dashboard" }] : []),
   ];
 
   return (
@@ -69,15 +73,8 @@ const Header = () => {
           </nav>
 
           {/* CTA Section - Desktop */}
-          <div className="hidden lg:flex items-center gap-4">
-            <Link href="/signup" className="text-foreground text-sm">
-              Don&apos;t have an account?
-            </Link>
-            <Link href="/signin">
-              <Button variant="default" size="sm">
-                Login
-              </Button>
-            </Link>
+          <div className="hidden lg:flex items-center">
+            <UserNav />
           </div>
 
           {/* Mobile Menu Button */}
@@ -114,23 +111,8 @@ const Header = () => {
               </Link>
             ))}
             <div className="pt-4 border-t border-border/20">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 px-4">
-                <Link
-                  href="/signup"
-                  className="text-foreground text-sm cursor-pointer"
-                >
-                  Don&apos;t have an account?
-                </Link>
-                <Link href="/signin" onClick={() => setIsMenuOpen(false)}>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    fullWidth
-                    className="sm:w-auto"
-                  >
-                    Login
-                  </Button>
-                </Link>
+              <div className="px-4">
+                <UserNav />
               </div>
             </div>
           </nav>
