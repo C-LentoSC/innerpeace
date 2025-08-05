@@ -29,27 +29,27 @@ const PackagesPage = () => {
       // Set initial states
       gsap.set(titleRef.current, {
         y: 80,
-        opacity: 0
+        opacity: 0,
       });
 
       gsap.set(descriptionRef.current, {
         y: 60,
-        opacity: 0
+        opacity: 0,
       });
 
       gsap.set(controlsRef.current, {
         y: 60,
-        opacity: 0
+        opacity: 0,
       });
 
       gsap.set(gridRef.current, {
         y: 80,
-        opacity: 0
+        opacity: 0,
       });
 
       gsap.set(paginationRef.current, {
         y: 40,
-        opacity: 0
+        opacity: 0,
       });
 
       // Create main timeline
@@ -57,8 +57,8 @@ const PackagesPage = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 80%",
-          toggleActions: "play none none reverse"
-        }
+          toggleActions: "play none none reverse",
+        },
       });
 
       // Animate elements in sequence
@@ -66,39 +66,55 @@ const PackagesPage = () => {
         y: 0,
         opacity: 1,
         duration: 1,
-        ease: "power2.out"
+        ease: "power2.out",
       })
-      .to(descriptionRef.current, {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        ease: "power2.out"
-      }, "-=0.4")
-      .to(controlsRef.current, {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        ease: "power2.out"
-      }, "-=0.2")
-      .to(gridRef.current, {
-        y: 0,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out"
-      }, "-=0.4")
-      .to(paginationRef.current, {
-        y: 0,
-        opacity: 1,
-        duration: 0.6,
-        ease: "power2.out"
-      }, "-=0.2");
+        .to(
+          descriptionRef.current,
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "power2.out",
+          },
+          "-=0.4"
+        )
+        .to(
+          controlsRef.current,
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "power2.out",
+          },
+          "-=0.2"
+        )
+        .to(
+          gridRef.current,
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1,
+            ease: "power2.out",
+          },
+          "-=0.4"
+        )
+        .to(
+          paginationRef.current,
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            ease: "power2.out",
+          },
+          "-=0.2"
+        );
 
       // Animate package cards with stagger
       packageRefs.current.forEach((ref, index) => {
         if (ref) {
           gsap.set(ref, {
             y: 100,
-            opacity: 0
+            opacity: 0,
           });
 
           gsap.to(ref, {
@@ -110,12 +126,11 @@ const PackagesPage = () => {
             scrollTrigger: {
               trigger: ref,
               start: "top 90%",
-              toggleActions: "play none none reverse"
-            }
+              toggleActions: "play none none reverse",
+            },
           });
         }
       });
-
     }, sectionRef);
 
     return () => ctx.revert();
@@ -233,7 +248,10 @@ const PackagesPage = () => {
   );
 
   return (
-    <div ref={sectionRef} className="flex flex-col w-full relative overflow-hidden">
+    <div
+      ref={sectionRef}
+      className="flex flex-col w-full relative overflow-hidden"
+    >
       {/* Background Image */}
       <div className="absolute w-full -z-10">
         <Image
@@ -267,10 +285,16 @@ const PackagesPage = () => {
         <div className="my-container">
           {/* Header */}
           <div ref={headerRef} className="text-center py-20">
-            <h1 ref={titleRef} className="text-4xl md:text-5xl lg:text-6xl font-medium mb-6">
+            <h1
+              ref={titleRef}
+              className="text-4xl md:text-5xl lg:text-6xl font-medium mb-6"
+            >
               Our Packages
             </h1>
-            <p ref={descriptionRef} className="text-sm lg:text-base max-w-3xl mx-auto leading-relaxed">
+            <p
+              ref={descriptionRef}
+              className="text-sm lg:text-base max-w-3xl mx-auto leading-relaxed"
+            >
               We give our customers a exclusive range of packages to please
               their need as to their liking now let&apos;s have a look on what
               you love the most.
@@ -278,7 +302,10 @@ const PackagesPage = () => {
           </div>
 
           {/* Category Tabs and Search */}
-          <div ref={controlsRef} className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-6">
+          <div
+            ref={controlsRef}
+            className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-6"
+          >
             {/* Category Tabs */}
             <div className="flex space-x-2 w-full sm:w-auto justify-center sm:justify-start">
               {categories.map((category) => (
@@ -310,7 +337,10 @@ const PackagesPage = () => {
           </div>
 
           {/* Packages Grid */}
-          <div ref={gridRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-16">
+          <div
+            ref={gridRef}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-16"
+          >
             {paginatedPackages.map((pkg, index) => (
               <div
                 key={pkg.id}
@@ -358,7 +388,10 @@ const PackagesPage = () => {
           </div>
 
           {/* Pagination */}
-          <div ref={paginationRef} className="flex justify-center items-center space-x-2">
+          <div
+            ref={paginationRef}
+            className="flex justify-center items-center space-x-2"
+          >
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}

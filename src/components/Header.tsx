@@ -34,7 +34,7 @@ const Header = () => {
     { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
     { label: "Packages", href: "/packages" },
-    ...(session ? [{ label: "Dashboard", href: "/dashboard" }] : []),
+    // ...(session ? [{ label: "Dashboard", href: "/dashboard" }] : []),
   ];
 
   return (
