@@ -18,7 +18,7 @@ const ContactSection = () => {
       // Set initial states
       gsap.set(titleRef.current, {
         y: 60,
-        opacity: 0
+        opacity: 0,
       });
 
       // Animate title
@@ -30,8 +30,8 @@ const ContactSection = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 80%",
-          toggleActions: "play none none reverse"
-        }
+          toggleActions: "play none none reverse",
+        },
       });
 
       // Animate contact cards with stagger
@@ -39,7 +39,7 @@ const ContactSection = () => {
         if (ref) {
           gsap.set(ref, {
             y: 80,
-            opacity: 0
+            opacity: 0,
           });
 
           gsap.to(ref, {
@@ -51,12 +51,11 @@ const ContactSection = () => {
             scrollTrigger: {
               trigger: ref,
               start: "top 85%",
-              toggleActions: "play none none reverse"
-            }
+              toggleActions: "play none none reverse",
+            },
           });
         }
       });
-
     }, sectionRef);
 
     return () => ctx.revert();
@@ -70,7 +69,10 @@ const ContactSection = () => {
           <div className="relative z-10">
             {/* Title */}
             <div className="text-center mb-16">
-              <h2 ref={titleRef} className="text-3xl md:text-4xl lg:text-5xl font-medium gradient-text1 mb-4">
+              <h2
+                ref={titleRef}
+                className="text-3xl md:text-4xl lg:text-5xl font-medium gradient-text1 mb-4"
+              >
                 Get in Touch With Us
               </h2>
             </div>
@@ -78,7 +80,12 @@ const ContactSection = () => {
             {/* Contact Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mx-auto">
               {/* Email Card */}
-              <div ref={(el) => { cardRefs.current[0] = el; }} className="flex flex-col items-center text-center space-y-6">
+              <div
+                ref={(el) => {
+                  cardRefs.current[0] = el;
+                }}
+                className="flex flex-col items-center text-center space-y-6"
+              >
                 {/* Icon Circle */}
                 <div className="w-20 h-20 bg-gradient-to-br from-warm-gold to-soft-yellow rounded-full flex items-center justify-center shadow-lg">
                   <Mail className="w-8 h-8 text-background" />
@@ -99,7 +106,12 @@ const ContactSection = () => {
               </div>
 
               {/* Phone Card */}
-              <div ref={(el) => { cardRefs.current[1] = el; }} className="flex flex-col items-center text-center space-y-6">
+              <div
+                ref={(el) => {
+                  cardRefs.current[1] = el;
+                }}
+                className="flex flex-col items-center text-center space-y-6"
+              >
                 {/* Icon Circle */}
                 <div className="w-20 h-20 bg-gradient-to-br from-warm-gold to-soft-yellow rounded-full flex items-center justify-center shadow-lg">
                   <Phone className="w-8 h-8 text-background" />
@@ -120,7 +132,12 @@ const ContactSection = () => {
               </div>
 
               {/* Location Card */}
-              <div ref={(el) => { cardRefs.current[2] = el; }} className="flex flex-col items-center text-center space-y-6">
+              <div
+                ref={(el) => {
+                  cardRefs.current[2] = el;
+                }}
+                className="flex flex-col items-center text-center space-y-6"
+              >
                 {/* Icon Circle */}
                 <div className="w-20 h-20 bg-gradient-to-br from-warm-gold to-soft-yellow rounded-full flex items-center justify-center shadow-lg">
                   <MapPin className="w-8 h-8 text-background" />

@@ -21,12 +21,12 @@ const FAQSection = () => {
       // Set initial states
       gsap.set(titleRef.current, {
         y: 60,
-        opacity: 0
+        opacity: 0,
       });
 
       gsap.set(containerRef.current, {
         y: 80,
-        opacity: 0
+        opacity: 0,
       });
 
       // Animate title first
@@ -38,8 +38,8 @@ const FAQSection = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 80%",
-          toggleActions: "play none none reverse"
-        }
+          toggleActions: "play none none reverse",
+        },
       });
 
       // Animate container
@@ -51,8 +51,8 @@ const FAQSection = () => {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
-          toggleActions: "play none none reverse"
-        }
+          toggleActions: "play none none reverse",
+        },
       });
 
       // Animate FAQ items with stagger
@@ -60,7 +60,7 @@ const FAQSection = () => {
         if (ref) {
           gsap.set(ref, {
             y: 60,
-            opacity: 0
+            opacity: 0,
           });
 
           gsap.to(ref, {
@@ -72,12 +72,11 @@ const FAQSection = () => {
             scrollTrigger: {
               trigger: ref,
               start: "top 90%",
-              toggleActions: "play none none reverse"
-            }
+              toggleActions: "play none none reverse",
+            },
           });
         }
       });
-
     }, sectionRef);
 
     return () => ctx.revert();
@@ -125,7 +124,10 @@ const FAQSection = () => {
       <div className="my-container py-20">
         <div className="flex flex-col">
           {/* Background with paper texture */}
-          <div ref={containerRef} className="relative bg-gradient-to-br from-forest-green/20 via-warm-gold/10 to-sage-green/15 rounded-md p-8 md:p-12 overflow-hidden backdrop-blur-sm">
+          <div
+            ref={containerRef}
+            className="relative bg-gradient-to-br from-forest-green/20 via-warm-gold/10 to-sage-green/15 rounded-md p-8 md:p-12 overflow-hidden backdrop-blur-sm"
+          >
             {/* Paper texture background */}
             <div className="absolute inset-0 opacity-30">
               <Image
@@ -144,7 +146,10 @@ const FAQSection = () => {
             <div className="relative z-10">
               {/* Title */}
               <div className="text-center mb-12">
-                <h2 ref={titleRef} className="text-3xl md:text-4xl lg:text-5xl font-medium text-foreground mb-4">
+                <h2
+                  ref={titleRef}
+                  className="text-3xl md:text-4xl lg:text-5xl font-medium text-foreground mb-4"
+                >
                   Have Any Questions
                 </h2>
               </div>
@@ -154,7 +159,9 @@ const FAQSection = () => {
                 {faqs.map((faq, index) => (
                   <div
                     key={faq.id}
-                    ref={(el) => { faqRefs.current[index] = el; }}
+                    ref={(el) => {
+                      faqRefs.current[index] = el;
+                    }}
                     className="bg-background/50 backdrop-blur-sm rounded-lg overflow-hidden transition-all duration-300  shadow-2xl"
                   >
                     {/* Question Header */}

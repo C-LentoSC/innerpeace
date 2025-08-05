@@ -20,12 +20,12 @@ const PackagesSection = () => {
       // Set initial states
       gsap.set(titleRef.current, {
         y: 60,
-        opacity: 0
+        opacity: 0,
       });
 
       gsap.set(containerRef.current, {
         y: 80,
-        opacity: 0
+        opacity: 0,
       });
 
       // Animate title
@@ -37,8 +37,8 @@ const PackagesSection = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 80%",
-          toggleActions: "play none none reverse"
-        }
+          toggleActions: "play none none reverse",
+        },
       });
 
       // Animate container
@@ -50,8 +50,8 @@ const PackagesSection = () => {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
-          toggleActions: "play none none reverse"
-        }
+          toggleActions: "play none none reverse",
+        },
       });
 
       // Animate service cards with stagger
@@ -59,7 +59,7 @@ const PackagesSection = () => {
         if (ref) {
           gsap.set(ref, {
             y: 100,
-            opacity: 0
+            opacity: 0,
           });
 
           gsap.to(ref, {
@@ -71,12 +71,11 @@ const PackagesSection = () => {
             scrollTrigger: {
               trigger: ref,
               start: "top 90%",
-              toggleActions: "play none none reverse"
-            }
+              toggleActions: "play none none reverse",
+            },
           });
         }
       });
-
     }, sectionRef);
 
     return () => ctx.revert();
@@ -86,11 +85,17 @@ const PackagesSection = () => {
     <section ref={sectionRef} className="">
       <div className=" my-container py-20 ">
         <div className=" flex flex-col">
-          <div ref={titleRef} className=" font-medium text-3xl md:text-4xl gradient-text1 text-center mb-10">
+          <div
+            ref={titleRef}
+            className=" font-medium text-3xl md:text-4xl gradient-text1 text-center mb-10"
+          >
             Our Excusive Services We Provide
           </div>
 
-          <div ref={containerRef} className="rounded-md p-8 md:p-12 flex flex-col items-center justify-center space-y-16 relative overflow-hidden">
+          <div
+            ref={containerRef}
+            className="rounded-md p-8 md:p-12 flex flex-col items-center justify-center space-y-16 relative overflow-hidden"
+          >
             <Image
               src="/assets/paper-texture.jpg"
               alt="Package 01"
@@ -102,7 +107,9 @@ const PackagesSection = () => {
             {DEMO_SERVICES.map((service, index) => (
               <div
                 key={service.id}
-                ref={(el) => { serviceRefs.current[index] = el; }}
+                ref={(el) => {
+                  serviceRefs.current[index] = el;
+                }}
               >
                 <ServiceCard
                   title={service.title}

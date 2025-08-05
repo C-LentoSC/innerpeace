@@ -10,7 +10,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 // Loading fallback component
 const LoadingFallback = () => {
-  return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      Loading...
+    </div>
+  );
 };
 
 // Main component with search params access
