@@ -154,7 +154,7 @@ const FAQSection = () => {
                 {faqs.map((faq, index) => (
                   <div
                     key={faq.id}
-                    ref={(el) => (faqRefs.current[index] = el)}
+                    ref={(el) => { faqRefs.current[index] = el; }}
                     className="bg-background/50 backdrop-blur-sm rounded-lg overflow-hidden transition-all duration-300  shadow-2xl"
                   >
                     {/* Question Header */}

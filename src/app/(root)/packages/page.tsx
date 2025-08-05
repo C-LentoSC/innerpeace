@@ -344,7 +344,7 @@ const PackagesPage = () => {
             {paginatedPackages.map((pkg, index) => (
               <div
                 key={pkg.id}
-                ref={(el) => (packageRefs.current[index] = el)}
+                ref={(el) => { packageRefs.current[index] = el; }}
                 className="bg-card/80 backdrop-blur-sm border border-border/20 rounded-2xl overflow-hidden hover:border-border/40 hover:bg-card/90 transition-all duration-300 group shadow-lg"
               >
                 <div className="flex flex-col sm:flex-row h-auto sm:h-48">

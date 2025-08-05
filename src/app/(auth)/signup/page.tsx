@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/Button";
 import { useRouter } from "next/navigation";
-import { signUpSchema, type SignUpFormData } from "@/lib/validations";
+import { signUpSchema } from "@/lib/validations";
 import { ZodError } from "zod";
 
 const SignUp = () => {

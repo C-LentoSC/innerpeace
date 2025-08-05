@@ -18,7 +18,7 @@ const stats = [
     icon: Users,
   },
   {
-    name: "Today's Bookings",
+    name: "Today&apos;s Bookings",
     value: "8",
     change: "+3",
     changeType: "increase" as const,
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-3xl font-bold gradient-text1">Dashboard</h1>
         <p className="mt-2 text-muted-foreground">
-          Welcome back! Here's what's happening at InnerPeace today.
+          Welcome back! Here&apos;s what&apos;s happening at InnerPeace today.
         </p>
       </div>
 
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
         <div className="bg-card rounded-lg border border-border p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-foreground">
-              Today's Bookings
+              Today&apos;s Bookings
             </h2>
             <button className="text-primary hover:text-primary/80 text-sm font-medium">
               View all

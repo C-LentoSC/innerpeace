@@ -78,7 +78,7 @@ const ContactSection = () => {
             {/* Contact Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mx-auto">
               {/* Email Card */}
-              <div ref={(el) => (cardRefs.current[0] = el)} className="flex flex-col items-center text-center space-y-6">
+              <div ref={(el) => { cardRefs.current[0] = el; }} className="flex flex-col items-center text-center space-y-6">
                 {/* Icon Circle */}
                 <div className="w-20 h-20 bg-gradient-to-br from-warm-gold to-soft-yellow rounded-full flex items-center justify-center shadow-lg">
                   <Mail className="w-8 h-8 text-background" />
@@ -99,7 +99,7 @@ const ContactSection = () => {
               </div>
 
               {/* Phone Card */}
-              <div ref={(el) => (cardRefs.current[1] = el)} className="flex flex-col items-center text-center space-y-6">
+              <div ref={(el) => { cardRefs.current[1] = el; }} className="flex flex-col items-center text-center space-y-6">
                 {/* Icon Circle */}
                 <div className="w-20 h-20 bg-gradient-to-br from-warm-gold to-soft-yellow rounded-full flex items-center justify-center shadow-lg">
                   <Phone className="w-8 h-8 text-background" />
@@ -120,7 +120,7 @@ const ContactSection = () => {
               </div>
 
               {/* Location Card */}
-              <div ref={(el) => (cardRefs.current[2] = el)} className="flex flex-col items-center text-center space-y-6">
+              <div ref={(el) => { cardRefs.current[2] = el; }} className="flex flex-col items-center text-center space-y-6">
                 {/* Icon Circle */}
                 <div className="w-20 h-20 bg-gradient-to-br from-warm-gold to-soft-yellow rounded-full flex items-center justify-center shadow-lg">
                   <MapPin className="w-8 h-8 text-background" />

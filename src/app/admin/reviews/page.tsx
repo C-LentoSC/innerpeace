@@ -1,7 +1,6 @@
 import {
   Star,
   MessageSquare,
-  User,
   Calendar,
   Filter,
   Reply,

@@ -4,7 +4,6 @@ import {
   Users,
   Calendar,
   DollarSign,
-  Clock,
   Star,
   Activity,
 } from "lucide-react";

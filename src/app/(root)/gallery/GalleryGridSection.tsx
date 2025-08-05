@@ -80,7 +80,7 @@ const GalleryGridSection = () => {
       <div className="my-container">
         <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-3 gap-4 h-auto md:h-[90vh] md:max-h-[1000px]">
           {/* Image 1: Top Left */}
-          <div ref={(el) => (imageRefs.current[0] = el)} className="relative md:col-span-2 md:row-span-1 rounded-xl overflow-hidden h-64 md:h-auto group">
+          <div ref={(el) => { imageRefs.current[0] = el; }} className="relative md:col-span-2 md:row-span-1 rounded-xl overflow-hidden h-64 md:h-auto group">
             <Image
               src={galleryImages[0].src}
               alt={galleryImages[0].alt}
@@ -95,7 +95,7 @@ const GalleryGridSection = () => {
           </div>
 
           {/* Image 2: Top Right */}
-          <div ref={(el) => (imageRefs.current[1] = el)} className="relative md:col-start-3 md:col-span-2 md:row-span-1 rounded-xl overflow-hidden h-64 md:h-auto group">
+          <div ref={(el) => { imageRefs.current[1] = el; }} className="relative md:col-start-3 md:col-span-2 md:row-span-1 rounded-xl overflow-hidden h-64 md:h-auto group">
             <Image
               src={galleryImages[1].src}
               alt={galleryImages[1].alt}
@@ -110,7 +110,7 @@ const GalleryGridSection = () => {
           </div>
 
           {/* Image 3: Middle Left (Tall) */}
-          <div ref={(el) => (imageRefs.current[2] = el)} className="relative md:col-span-1 md:row-span-2 rounded-xl overflow-hidden h-96 md:h-auto group">
+          <div ref={(el) => { imageRefs.current[2] = el; }} className="relative md:col-span-1 md:row-span-2 rounded-xl overflow-hidden h-96 md:h-auto group">
             <Image
               src={galleryImages[2].src}
               alt={galleryImages[2].alt}
@@ -135,7 +135,7 @@ const GalleryGridSection = () => {
           </div>
 
           {/* Image 4: Middle Right (Tall) */}
-          <div ref={(el) => (imageRefs.current[3] = el)} className="relative md:col-start-4 md:col-span-1 md:row-span-2 rounded-xl overflow-hidden h-96 md:h-auto group">
+          <div ref={(el) => { imageRefs.current[3] = el; }} className="relative md:col-start-4 md:col-span-1 md:row-span-2 rounded-xl overflow-hidden h-96 md:h-auto group">
             <Image
               src={galleryImages[3].src}
               alt={galleryImages[3].alt}
@@ -150,7 +150,7 @@ const GalleryGridSection = () => {
           </div>
 
           {/* Image 5: Bottom Left */}
-          <div ref={(el) => (imageRefs.current[4] = el)} className="relative md:col-start-2 md:col-span-1 md:row-start-3 rounded-xl overflow-hidden h-64 md:h-auto group">
+          <div ref={(el) => { imageRefs.current[4] = el; }} className="relative md:col-start-2 md:col-span-1 md:row-start-3 rounded-xl overflow-hidden h-64 md:h-auto group">
             <Image
               src={galleryImages[4].src}
               alt={galleryImages[4].alt}
@@ -165,7 +165,7 @@ const GalleryGridSection = () => {
           </div>
 
           {/* Image 6: Bottom Right */}
-          <div ref={(el) => (imageRefs.current[5] = el)} className="relative md:col-start-3 md:col-span-1 md:row-start-3 rounded-xl overflow-hidden h-64 md:h-auto group">
+          <div ref={(el) => { imageRefs.current[5] = el; }} className="relative md:col-start-3 md:col-span-1 md:row-start-3 rounded-xl overflow-hidden h-64 md:h-auto group">
             <Image
               src={galleryImages[5].src}
               alt={galleryImages[5].alt}

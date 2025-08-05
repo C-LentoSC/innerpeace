@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/Button";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import UserNav from "@/components/UserNav";
@@ -11,7 +10,7 @@ import { useSession } from "next-auth/react";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { data: session } = useSession();
+  useSession(); // Keep the session authentication state active
 
   useEffect(() => {
     const handleScroll = () => {

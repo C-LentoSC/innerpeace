@@ -2,13 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/Button";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const SignIn = () => {
+// Loading fallback component
+const LoadingFallback = () => {
+  return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+};
+
+// Main component with search params access
+const SignInContent = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +50,7 @@ const SignIn = () => {
         router.push("/");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -184,6 +190,15 @@ const SignIn = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrap the component with Suspense boundary
+const SignIn = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <SignInContent />
+    </Suspense>
   );
 };
 

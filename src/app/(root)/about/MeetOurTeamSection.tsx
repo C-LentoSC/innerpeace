@@ -147,7 +147,7 @@ const MeetOurTeamSection = () => {
           {teamMembers.map((member, index) => (
             <div
               key={member.id}
-              ref={(el) => (memberRefs.current[index] = el)}
+              ref={(el) => { memberRefs.current[index] = el; }}
               className="group relative overflow-hidden rounded-3xl bg-card border border-border/10 hover:border-border/30 transition-all duration-300"
             >
               {/* Image Container */}

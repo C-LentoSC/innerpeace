@@ -102,7 +102,7 @@ const PackagesSection = () => {
             {DEMO_SERVICES.map((service, index) => (
               <div
                 key={service.id}
-                ref={(el) => (serviceRefs.current[index] = el)}
+                ref={(el) => { serviceRefs.current[index] = el; }}
               >
                 <ServiceCard
                   title={service.title}

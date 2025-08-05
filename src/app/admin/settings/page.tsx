@@ -1,6 +1,5 @@
 import {
   Settings as SettingsIcon,
-  User,
   Bell,
   Shield,
   Palette,

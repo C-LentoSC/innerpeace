@@ -4,9 +4,7 @@ import {
   Trash2,
   Edit,
   Plus,
-  Filter,
   Grid3X3,
-  List,
 } from "lucide-react";
 import { Button } from "@/components/Button";
 
