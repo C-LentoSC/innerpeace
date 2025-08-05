@@ -9,7 +9,9 @@ import {
   Droplets,
   Heart,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const massageTourImages = [
   {
@@ -55,8 +57,70 @@ const massageTourImages = [
 ];
 
 const HeadMassageTourSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // GSAP scroll animations
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      // Set initial states
+      gsap.set(titleRef.current, {
+        y: 80,
+        opacity: 0
+      });
+
+      gsap.set(descriptionRef.current, {
+        y: 60,
+        opacity: 0
+      });
+
+      gsap.set(sliderRef.current, {
+        y: 100,
+        scale: 0.9,
+        opacity: 0
+      });
+
+      // Create timeline
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 80%",
+          toggleActions: "play none none reverse"
+        }
+      });
+
+      // Animate elements in sequence
+      tl.to(titleRef.current, {
+        y: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "power2.out"
+      })
+      .to(descriptionRef.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out"
+      }, "-=0.4")
+      .to(sliderRef.current, {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 1.2,
+        ease: "back.out(1.2)"
+      }, "-=0.2");
+
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   // Auto-slide functionality
   useEffect(() => {
@@ -87,20 +151,20 @@ const HeadMassageTourSection = () => {
   };
 
   return (
-    <section className="py-20">
+    <section ref={sectionRef} className="py-20">
       <div className="my-container">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium gradient-text1 mb-4">
+          <h1 ref={titleRef} className="text-4xl md:text-5xl lg:text-6xl font-medium gradient-text1 mb-4">
             Head Massage Tour
           </h1>
-          <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto">
+          <p ref={descriptionRef} className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto">
             Experience the profound benefits of our special Japanese head
             massage
           </p>
         </div>
 
         {/* Slider Container */}
-        <div className="relative max-w-6xl mx-auto">
+        <div ref={sliderRef} className="relative max-w-6xl mx-auto">
           <div className="flex items-center gap-4 md:gap-6">
             {/* Left Side Images - Hidden on Mobile */}
             <div className="hidden lg:flex flex-col gap-4 w-32">
