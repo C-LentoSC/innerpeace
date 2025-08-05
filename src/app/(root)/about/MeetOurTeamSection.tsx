@@ -1,6 +1,17 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const MeetOurTeamSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const memberRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const teamMembers = [
     {
       id: 1,
@@ -46,15 +57,83 @@ const MeetOurTeamSection = () => {
     },
   ];
 
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      // Set initial states
+      gsap.set(titleRef.current, {
+        y: 80,
+        opacity: 0
+      });
+
+      gsap.set(descriptionRef.current, {
+        y: 60,
+        opacity: 0
+      });
+
+      // Create timeline for header
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 80%",
+          toggleActions: "play none none reverse"
+        }
+      });
+
+      // Animate header elements
+      tl.to(titleRef.current, {
+        y: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "power2.out"
+      })
+      .to(descriptionRef.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out"
+      }, "-=0.4");
+
+      // Animate team member cards with stagger
+      memberRefs.current.forEach((ref, index) => {
+        if (ref) {
+          gsap.set(ref, {
+            y: 100,
+            opacity: 0,
+            scale: 0.9
+          });
+
+          gsap.to(ref, {
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.8,
+            ease: "back.out(1.2)",
+            delay: index * 0.15,
+            scrollTrigger: {
+              trigger: ref,
+              start: "top 90%",
+              toggleActions: "play none none reverse"
+            }
+          });
+        }
+      });
+
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="py-16 lg:py-24">
+    <section ref={sectionRef} className="py-16 lg:py-24">
       <div className="my-container">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium gradient-text1 mb-6">
+          <h2 ref={titleRef} className="text-4xl md:text-5xl lg:text-6xl font-medium gradient-text1 mb-6">
             Meet Our Team
           </h2>
-          <p className="text-sm lg:text-base max-w-4xl mx-auto leading-relaxed">
+          <p ref={descriptionRef} className="text-sm lg:text-base max-w-4xl mx-auto leading-relaxed">
             At the heart of our sanctuary is a team of masterful therapists and
             beauty artisans, each chosen for their exceptional skill, elegance,
             and devotion to the art of wellness. With impeccable technique and a
@@ -64,10 +143,11 @@ const MeetOurTeamSection = () => {
         </div>
 
         {/* Team Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {teamMembers.map((member) => (
+        <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {teamMembers.map((member, index) => (
             <div
               key={member.id}
+              ref={(el) => (memberRefs.current[index] = el)}
               className="group relative overflow-hidden rounded-3xl bg-card border border-border/10 hover:border-border/30 transition-all duration-300"
             >
               {/* Image Container */}

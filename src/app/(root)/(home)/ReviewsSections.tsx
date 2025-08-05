@@ -2,9 +2,19 @@
 
 import { MessageCircleCode } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const ReviewsSections = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const titlePart1Ref = useRef<HTMLDivElement>(null);
+  const titlePart2Ref = useRef<HTMLDivElement>(null);
+  const titlePart3Ref = useRef<HTMLDivElement>(null);
+  const headerImageRef = useRef<HTMLDivElement>(null);
+  const reviewCardRef = useRef<HTMLDivElement>(null);
+
   // Reviews data
   const reviews = [
     {
@@ -41,6 +51,75 @@ const ReviewsSections = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // GSAP scroll animations
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      // Set initial states
+      gsap.set(titlePart1Ref.current, {
+        y: 60,
+        opacity: 0
+      });
+
+      gsap.set([titlePart2Ref.current, headerImageRef.current, titlePart3Ref.current], {
+        y: 80,
+        opacity: 0
+      });
+
+      gsap.set(reviewCardRef.current, {
+        y: 100,
+        scale: 0.9,
+        opacity: 0
+      });
+
+      // Create timeline
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 80%",
+          toggleActions: "play none none reverse"
+        }
+      });
+
+      // Animate header elements
+      tl.to(titlePart1Ref.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out"
+      })
+      .to(titlePart2Ref.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out"
+      }, "-=0.4")
+      .to(headerImageRef.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "back.out(1.2)"
+      }, "-=0.6")
+      .to(titlePart3Ref.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out"
+      }, "-=0.4")
+      .to(reviewCardRef.current, {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 1,
+        ease: "back.out(1.2)"
+      }, "-=0.2");
+
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   // Auto-slide effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -72,19 +151,19 @@ const ReviewsSections = () => {
   const currentReview = reviews[currentIndex];
 
   return (
-    <section className="">
+    <section ref={sectionRef} className="">
       <div className="my-container py-20">
         <div className="flex flex-col">
           {/* Header Section - Keeping as requested */}
-          <div className="flex flex-col items-center justify-center">
-            <div className=" mb-4 text-3xl md:text-4xl text-center">
+          <div ref={headerRef} className="flex flex-col items-center justify-center">
+            <div ref={titlePart1Ref} className=" mb-4 text-3xl md:text-4xl text-center">
               What Our
             </div>
             <div className=" flex flex-col sm:flex-row items-center justify-center gap-4">
-              <div className="font-medium text-4xl md:text-5xl lg:text-6xl gradient-text1 text-center">
+              <div ref={titlePart2Ref} className="font-medium text-4xl md:text-5xl lg:text-6xl gradient-text1 text-center">
                 Clients
               </div>
-              <div className="w-64 h-24 overflow-hidden rounded-3xl flex items-center justify-center">
+              <div ref={headerImageRef} className="w-64 h-24 overflow-hidden rounded-3xl flex items-center justify-center">
                 <Image
                   src="/assets/images/1.jpg"
                   alt="Tranquility"
@@ -93,7 +172,7 @@ const ReviewsSections = () => {
                   className=" object-cover object-center"
                 />
               </div>
-              <div className="font-medium text-4xl md:text-5xl lg:text-6xl gradient-text1 text-center">
+              <div ref={titlePart3Ref} className="font-medium text-4xl md:text-5xl lg:text-6xl gradient-text1 text-center">
                 Says
               </div>
             </div>
@@ -101,7 +180,7 @@ const ReviewsSections = () => {
 
           {/* Review Card Section */}
           <div className="mt-16">
-            <div className="bg-gradient-to-br from-dark-forest via-background to-dark-forest border border-warm-gold/20 rounded-2xl p-8 md:p-12 relative overflow-hidden backdrop-blur-sm">
+            <div ref={reviewCardRef} className="bg-gradient-to-br from-dark-forest via-background to-dark-forest border border-warm-gold/20 rounded-2xl p-8 md:p-12 relative overflow-hidden backdrop-blur-sm">
               {/* Background gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-background/40 via-transparent to-background/40 pointer-events-none"></div>
 
