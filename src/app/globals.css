@@ -3,10 +3,10 @@
 
 :root {
   /* Primary colors from the palette */
-  --background: #080c0f; /* Dark background */
-  --foreground: #dadada; /* Light text */
+  --background: #0a0a0b; /* Darker background for modern look */
+  --foreground: #ffffff; /* Pure white text */
 
-  /* Color palette variables - Updated from the image */
+  /* Color palette variables - Enhanced for modern dark theme */
   --dark-forest: #080c0f; /* Darkest background */
   --forest-green: #b9a074; /* Beige/tan tone */
   --sage-green: #c9d1a0; /* Light green */
@@ -16,17 +16,33 @@
   --soft-yellow: #ffca2a; /* Bright yellow */
   --bright-orange: #ffff9f; /* Very light yellow */
 
+  /* Modern dark theme additions */
+  --dark-golden: #b8860b; /* Dark golden for modern accents */
+  --deep-charcoal: #1a1a1c; /* Card backgrounds */
+  --charcoal: #2a2a2e; /* Elevated surfaces */
+  --slate-border: #3a3a40; /* Subtle borders */
+  --white-border: rgba(255, 255, 255, 0.15); /* White borders */
+  --white-border-hover: rgba(255, 255, 255, 0.25); /* White borders on hover */
+  --glass-overlay: rgba(255, 255, 255, 0.05); /* Glass effect overlay */
+  --glass-border: rgba(255, 255, 255, 0.1); /* Glass effect borders */
+
   /* Semantic colors */
   --primary: var(--warm-gold);
   --secondary: var(--sage-green);
   --accent: var(--soft-yellow);
   --muted: var(--forest-green);
-  --border: var(--earth-brown);
-  --card: rgba(185, 160, 116, 0.1); /* Translucent beige */
+  --border: var(--white-border);
+  --card: var(--deep-charcoal); /* Modern card background */
+  --card-elevated: var(--charcoal); /* Elevated card background */
   --destructive: #dc2626;
   --success: var(--sage-green);
   --warning: var(--soft-yellow);
   --info: var(--earth-brown);
+
+  /* Glass morphism effects */
+  --glass-card: var(--glass-overlay);
+  --glass-card-border: var(--glass-border);
+  --glass-card-hover: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
@@ -52,24 +68,36 @@
   /* Card variants */
   --color-card: var(--card);
   --color-card-foreground: var(--foreground);
+  --color-card-elevated: var(--card-elevated);
 
   /* Border and other semantic colors */
   --color-border: var(--border);
+  --color-white-border: var(--white-border);
+  --color-white-border-hover: var(--white-border-hover);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
 
+  /* Glass effect colors */
+  --color-glass-card: var(--glass-card);
+  --color-glass-border: var(--glass-card-border);
+  --color-glass-hover: var(--glass-card-hover);
+
   /* Individual palette colors - Updated with correct hex codes */
-  --color-dark-forest: #080c0f;
-  --color-forest-green: #b9a074;
-  --color-sage-green: #c9d1a0;
-  --color-warm-gold: #cc9e36;
-  --color-earth-brown: #dadada;
-  --color-warm-gray: #ffe689;
-  --color-soft-yellow: #ffca2a;
-  --color-bright-orange: #ffff9f;
+  --color-dark-forest: var(--dark-forest);
+  --color-forest-green: var(--forest-green);
+  --color-sage-green: var(--sage-green);
+  --color-warm-gold: var(--warm-gold);
+  --color-dark-golden: var(--dark-golden);
+  --color-earth-brown: var(--earth-brown);
+  --color-warm-gray: var(--warm-gray);
+  --color-soft-yellow: var(--soft-yellow);
+  --color-bright-orange: var(--bright-orange);
+  --color-deep-charcoal: var(--deep-charcoal);
+  --color-charcoal: var(--charcoal);
+  --color-slate-border: var(--slate-border);
 
   /* Font families */
   --font-sans: var(--font-playfair-display), "Playfair Display", serif;
@@ -90,17 +118,122 @@ body {
   padding: 0;
 }
 
-/* Custom gradient utility */
+/* Modern Glass Morphism Effects */
+.glass-card {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  background: var(--glass-card-hover);
+  border-color: var(--white-border-hover);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2),
+    0 4px 6px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Modern Card Styles */
+.modern-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.modern-card-elevated {
+  background: var(--card-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Glossy Effects */
+.glossy-golden {
+  background: linear-gradient(145deg, var(--warm-gold), var(--dark-golden));
+  border: 1px solid var(--white-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.glossy-golden:hover {
+  background: linear-gradient(145deg, var(--soft-yellow), var(--warm-gold));
+  border-color: var(--white-border-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Modern Sidebar Glass Effect */
+.sidebar-glass {
+  background: rgba(16, 16, 18, 0.85);
+  border-right: 1px solid var(--white-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1),
+    inset -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Modern Header Glass Effect */
+.header-glass {
+  background: rgba(16, 16, 18, 0.9);
+  border-bottom: 1px solid var(--white-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Custom gradient utility - Updated for modern golden theme */
 .innerpeace-gradient1 {
-  background: linear-gradient(135deg, var(--warm-gray), var(--soft-yellow));
+  background: linear-gradient(135deg, var(--warm-gold), var(--dark-golden));
+}
+
+.modern-gradient-text {
+  background: linear-gradient(135deg, var(--warm-gold), var(--soft-yellow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 .my-container {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .my-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .my-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }
 
 .gradient-text1 {
-  @apply bg-gradient-to-b from-warm-gray to-soft-yellow bg-clip-text text-transparent py-2;
+  background: linear-gradient(to bottom, var(--warm-gray), var(--soft-yellow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .line-clamp-2 {

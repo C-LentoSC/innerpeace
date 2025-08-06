@@ -29,10 +29,10 @@ export default function UserNav() {
     <div className="flex items-center space-x-4">
       <div className="flex items-center space-x-2">
         <div className="text-sm">
-          <p className="font-medium text-foreground">
+          <p className="font-medium modern-gradient-text">
             Welcome, {session.user?.firstName || session.user?.name}
           </p>
-          <p className="text-foreground/60 text-xs">
+          <p className="text-slate-300 text-xs">
             {session.user?.role === "SUPERADMIN"
               ? "Super Admin"
               : session.user?.role === "ADMIN"

@@ -74,13 +74,13 @@ const recentBookings = [
 const getStatusColor = (status: string) => {
   switch (status) {
     case "confirmed":
-      return "bg-success/20 text-success";
+      return "bg-green-900/30 text-green-400 border border-green-800";
     case "pending":
-      return "bg-warning/20 text-warning";
+      return "bg-yellow-900/30 text-yellow-400 border border-yellow-800";
     case "completed":
-      return "bg-primary/20 text-primary";
+      return "bg-warm-gold/20 text-warm-gold border border-warm-gold/40";
     default:
-      return "bg-muted/20 text-muted-foreground";
+      return "bg-glass-card text-slate-400 border border-white-border";
   }
 };
 
@@ -89,8 +89,8 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold gradient-text1">Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">
+        <h1 className="text-3xl font-bold modern-gradient-text">Dashboard</h1>
+        <p className="mt-2 text-slate-300">
           Welcome back! Here&apos;s what&apos;s happening at InnerPeace today.
         </p>
       </div>
@@ -100,27 +100,27 @@ export default function AdminDashboard() {
         {stats.map((stat) => (
           <div
             key={stat.name}
-            className="bg-card rounded-lg border border-border p-6 hover:shadow-lg transition-shadow"
+            className="glass-card rounded-xl p-6 hover:shadow-xl transition-all duration-200 group"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-slate-400">
                   {stat.name}
                 </p>
-                <p className="text-3xl font-bold text-foreground mt-2">
+                <p className="text-3xl font-bold modern-gradient-text mt-2">
                   {stat.value}
                 </p>
               </div>
-              <div className="bg-primary/20 p-3 rounded-full">
-                <stat.icon className="h-6 w-6 text-primary" />
+              <div className="bg-warm-gold/20 p-3 rounded-xl border border-warm-gold/40">
+                <stat.icon className="h-6 w-6 text-warm-gold" />
               </div>
             </div>
             <div className="mt-4 flex items-center">
-              <TrendingUp className="h-4 w-4 text-success mr-1" />
-              <span className="text-sm text-success font-medium">
+              <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
+              <span className="text-sm text-green-400 font-medium">
                 {stat.change}
               </span>
-              <span className="text-sm text-muted-foreground ml-1">
+              <span className="text-sm text-slate-400 ml-1">
                 from last month
               </span>
             </div>
@@ -131,12 +131,12 @@ export default function AdminDashboard() {
       {/* Content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent bookings */}
-        <div className="bg-card rounded-lg border border-border p-6">
+        <div className="glass-card rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-foreground">
+            <h2 className="text-xl font-semibold modern-gradient-text">
               Today&apos;s Bookings
             </h2>
-            <button className="text-primary hover:text-primary/80 text-sm font-medium">
+            <button className="text-warm-gold hover:text-warm-gold/80 text-sm font-medium border border-white-border hover:border-white-border-hover px-3 py-1 rounded-lg transition-all">
               View all
             </button>
           </div>
@@ -144,10 +144,10 @@ export default function AdminDashboard() {
             {recentBookings.map((booking) => (
               <div
                 key={booking.id}
-                className="flex items-center justify-between p-4 bg-background rounded-lg border border-border"
+                className="flex items-center justify-between p-4 bg-glass-card rounded-xl border border-white-border hover:border-white-border-hover transition-all"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="bg-primary/20 p-2 rounded-full">
+                  <div className="bg-warm-gold/20 p-2 rounded-xl border border-warm-gold/40">
                     <Clock className="h-4 w-4 text-primary" />
                   </div>
                   <div>
