@@ -12,6 +12,7 @@ import {
   BarChart3,
   Image,
   X,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const navigation = [
   { name: "Bookings", href: "/admin/bookings", icon: Calendar },
   { name: "Customers", href: "/admin/customers", icon: Users },
   { name: "Packages", href: "/admin/packages", icon: Package },
+  { name: "Categories", href: "/admin/category", icon: FolderOpen },
   { name: "Gallery", href: "/admin/gallery", icon: Image },
   { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },

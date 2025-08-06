@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+// Category validation schemas
+export const createCategorySchema = z.object({
+  name: z
+    .string({ message: "Category name is required" })
+    .min(1, "Category name is required")
+    .max(100, "Category name must be less than 100 characters")
+    .trim(),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .optional(),
+  color: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color format")
+    .optional(),
+  icon: z.string().max(50, "Icon name too long").optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateCategorySchema = createCategorySchema;
+
 export const signInSchema = z.object({
   email: z
     .string({ message: "Email is required" })
