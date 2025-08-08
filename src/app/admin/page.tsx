@@ -1,75 +1,5 @@
-import {
-  Users,
-  Calendar,
-  Package,
-  TrendingUp,
-  Clock,
-  Star,
-  DollarSign,
-} from "lucide-react";
-
-// Mock data - in real app, this would come from your database
-const stats = [
-  {
-    name: "Total Customers",
-    value: "247",
-    change: "+12%",
-    changeType: "increase" as const,
-    icon: Users,
-  },
-  {
-    name: "Today&apos;s Bookings",
-    value: "8",
-    change: "+3",
-    changeType: "increase" as const,
-    icon: Calendar,
-  },
-  {
-    name: "Monthly Revenue",
-    value: "₹45,230",
-    change: "+8.2%",
-    changeType: "increase" as const,
-    icon: DollarSign,
-  },
-  {
-    name: "Average Rating",
-    value: "4.8",
-    change: "+0.2",
-    changeType: "increase" as const,
-    icon: Star,
-  },
-];
-
-const recentBookings = [
-  {
-    id: 1,
-    customer: "Sarah Johnson",
-    service: "Deep Tissue Massage",
-    time: "10:00 AM",
-    status: "confirmed",
-  },
-  {
-    id: 2,
-    customer: "Mike Chen",
-    service: "Swedish Massage",
-    time: "2:00 PM",
-    status: "pending",
-  },
-  {
-    id: 3,
-    customer: "Emily Davis",
-    service: "Hot Stone Therapy",
-    time: "4:00 PM",
-    status: "confirmed",
-  },
-  {
-    id: 4,
-    customer: "Alex Rodriguez",
-    service: "Aromatherapy",
-    time: "6:00 PM",
-    status: "completed",
-  },
-];
+import { Users, Calendar, Package, TrendingUp, Clock, Star, DollarSign } from "lucide-react";
+import { prisma } from "@/prisma";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -84,7 +14,70 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function AdminDashboard() {
+function inr(amount: number) {
+  try {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount || 0);
+  } catch {
+    return `₹${Math.round(amount || 0).toLocaleString("en-IN")}`;
+  }
+}
+
+export default async function AdminDashboard() {
+  // Date ranges
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  // Parallel DB calls
+  const [totalCustomers, todaysBookingsCount, monthRevenueAgg, avgRatingAgg, recentBookings] = await Promise.all([
+    prisma.user.count(),
+    prisma.booking.count({
+      where: { date: { gte: startOfToday, lt: startOfTomorrow } },
+    }),
+    prisma.booking.aggregate({
+      _sum: { price: true },
+      where: {
+        date: { gte: startOfMonth, lt: startOfNextMonth },
+        status: { in: ["confirmed", "completed", "paid"] },
+      },
+    }),
+    prisma.review.aggregate({ _avg: { rating: true } }),
+    prisma.booking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { customer: true, service: true },
+    }),
+  ]);
+
+  const stats = [
+    {
+      name: "Total Customers",
+      value: String(totalCustomers),
+      change: "+-", // placeholder; wire trend later
+      icon: Users,
+    },
+    {
+      name: "Today’s Bookings",
+      value: String(todaysBookingsCount),
+      change: "+-",
+      icon: Calendar,
+    },
+    {
+      name: "Monthly Revenue",
+      value: inr(Number(monthRevenueAgg._sum.price || 0)),
+      change: "+-",
+      icon: DollarSign,
+    },
+    {
+      name: "Average Rating",
+      value: (avgRatingAgg._avg.rating ?? 0).toFixed(1),
+      change: "+-",
+      icon: Star,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -136,9 +129,9 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-semibold modern-gradient-text">
               Today&apos;s Bookings
             </h2>
-            <button className="text-warm-gold hover:text-warm-gold/80 text-sm font-medium border border-white-border hover:border-white-border-hover px-3 py-1 rounded-lg transition-all">
+            <a href="/admin/bookings" className="text-warm-gold hover:text-warm-gold/80 text-sm font-medium border border-white-border hover:border-white-border-hover px-3 py-1 rounded-lg transition-all">
               View all
-            </button>
+            </a>
           </div>
           <div className="space-y-4">
             {recentBookings.map((booking) => (
@@ -152,10 +145,10 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <p className="font-medium text-foreground">
-                      {booking.customer}
+                      {booking.customer.name || "Unknown"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {booking.service}
+                      {booking.service?.name || "Service"}
                     </p>
                   </div>
                 </div>
@@ -182,30 +175,30 @@ export default function AdminDashboard() {
             Quick Actions
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            <button className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
+            <a href="/admin/bookings/new" className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
               <Calendar className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium text-foreground">
                 New Booking
               </span>
-            </button>
-            <button className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
+            </a>
+            <a href="/admin/customers/new" className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
               <Users className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium text-foreground">
                 Add Customer
               </span>
-            </button>
-            <button className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
+            </a>
+            <a href="/admin/packages/new" className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
               <Package className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium text-foreground">
                 New Package
               </span>
-            </button>
-            <button className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
+            </a>
+            <a href="/admin/analytics" className="flex flex-col items-center justify-center p-6 bg-background rounded-lg border border-border hover:bg-muted/50 transition-colors group">
               <TrendingUp className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium text-foreground">
                 View Reports
               </span>
-            </button>
+            </a>
           </div>
         </div>
       </div>

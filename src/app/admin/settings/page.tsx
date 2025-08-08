@@ -1,3 +1,8 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Settings as SettingsIcon,
   Bell,
@@ -8,10 +13,148 @@ import {
   Phone,
   MapPin,
   Save,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/Button";
 
+interface Settings {
+  adminName: string;
+  adminEmail: string;
+  timezone: string;
+  salonName: string;
+  phone: string;
+  email: string;
+  address: string;
+  openingTime: string;
+  closingTime: string;
+  notifications: {
+    newBookings: boolean;
+    paymentConfirmations: boolean;
+    customerReviews: boolean;
+    weeklyReports: boolean;
+  };
+}
+
 export default function SettingsPage() {
+  const router = useRouter();
+  const { data: session, update, status } = useSession();
+  const [settings, setSettings] = useState<Settings>({
+    adminName: "John Doe",
+    adminEmail: "admin@innerpeace.com",
+    timezone: "Asia/Kolkata",
+    salonName: "InnerPeace Wellness Spa",
+    phone: "+91 98765 43210",
+    email: "info@innerpeace.com",
+    address: "123 Wellness Street, Spa District, Mumbai, Maharashtra 400001",
+    openingTime: "09:00",
+    closingTime: "21:00",
+    notifications: {
+      newBookings: true,
+      paymentConfirmations: true,
+      customerReviews: false,
+      weeklyReports: true,
+    },
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    // Fetch when session is ready so we can include userId
+    if (status !== "loading") {
+      fetchSettings();
+    }
+  }, [status, (session as any)?.user?.id]);
+
+  // Prefill admin fields from the logged-in user's session
+  useEffect(() => {
+    if (session?.user) {
+      setSettings((prev) => ({
+        ...prev,
+        // Only prefill if values are not already fetched from server
+        adminName: prev.adminName && prev.adminName !== "John Doe" ? prev.adminName : (session.user.name ?? prev.adminName),
+        adminEmail: prev.adminEmail && prev.adminEmail !== "admin@innerpeace.com" ? prev.adminEmail : (session.user.email ?? prev.adminEmail),
+      }));
+    }
+  }, [session]);
+
+  const fetchSettings = async () => {
+    try {
+      const userId = (session as any)?.user?.id;
+      const response = await fetch(userId ? `/api/settings?userId=${encodeURIComponent(userId)}` : "/api/settings");
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+      }
+    } catch (err) {
+      console.error("Error fetching settings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage("");
+    
+    try {
+      const response = await fetch("/api/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...settings,
+          userId: (session as any)?.user?.id ?? undefined,
+        }),
+      });
+
+      if (response.ok) {
+        const saved = await response.json();
+        // Sync any server-confirmed values back into local state
+        setSettings((prev) => ({
+          ...prev,
+          adminName: saved.adminName ?? prev.adminName,
+          adminEmail: saved.adminEmail ?? prev.adminEmail,
+          phone: saved.phone ?? prev.phone,
+          address: saved.address ?? prev.address,
+        }));
+        setMessage("Settings saved successfully!");
+        // Update session so header reflects new name/email immediately
+        try {
+          await update?.({
+            name: settings.adminName,
+            email: settings.adminEmail,
+          } as any);
+        } catch {}
+        // Refresh any server components reading session
+        router.refresh();
+        // Re-fetch to ensure UI reflects DB
+        await fetchSettings();
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage("Failed to save settings");
+      }
+    } catch {
+      setMessage("Error saving settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleNotificationChange = (key: keyof Settings["notifications"], value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, [key]: value },
+    }));
+  };
+
+  if (loading) return <div className="p-6 text-center">Loading settings...</div>;
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -82,7 +225,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="John Doe"
+                    value={settings.adminName}
+                    onChange={(e) => handleInputChange("adminName", e.target.value)}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -92,7 +236,8 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="email"
-                    defaultValue="admin@innerpeace.com"
+                    value={settings.adminEmail}
+                    onChange={(e) => handleInputChange("adminEmail", e.target.value)}
                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -101,11 +246,15 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Time Zone
                 </label>
-                <select className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option>Asia/Kolkata (GMT+5:30)</option>
-                  <option>Asia/Dubai (GMT+4:00)</option>
-                  <option>Europe/London (GMT+0:00)</option>
-                  <option>America/New_York (GMT-5:00)</option>
+                <select 
+                  value={settings.timezone}
+                  onChange={(e) => handleInputChange("timezone", e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (GMT+4:00)</option>
+                  <option value="Europe/London">Europe/London (GMT+0:00)</option>
+                  <option value="America/New_York">America/New_York (GMT-5:00)</option>
                 </select>
               </div>
             </div>
@@ -126,7 +275,8 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue="InnerPeace Wellness Spa"
+                  value={settings.salonName}
+                  onChange={(e) => handleInputChange("salonName", e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -139,7 +289,8 @@ export default function SettingsPage() {
                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="tel"
-                      defaultValue="+91 98765 43210"
+                      value={settings.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
                       className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -152,7 +303,8 @@ export default function SettingsPage() {
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="email"
-                      defaultValue="info@innerpeace.com"
+                      value={settings.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
                       className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -164,7 +316,8 @@ export default function SettingsPage() {
                 </label>
                 <textarea
                   rows={3}
-                  defaultValue="123 Wellness Street, Spa District, Mumbai, Maharashtra 400001"
+                  value={settings.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -177,7 +330,8 @@ export default function SettingsPage() {
                     <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="time"
-                      defaultValue="09:00"
+                      value={settings.openingTime}
+                      onChange={(e) => handleInputChange("openingTime", e.target.value)}
                       className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -190,7 +344,8 @@ export default function SettingsPage() {
                     <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="time"
-                      defaultValue="21:00"
+                      value={settings.closingTime}
+                      onChange={(e) => handleInputChange("closingTime", e.target.value)}
                       className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -221,7 +376,8 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    defaultChecked
+                    checked={settings.notifications.newBookings}
+                    onChange={(e) => handleNotificationChange("newBookings", e.target.checked)}
                   />
                   <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
@@ -239,7 +395,8 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    defaultChecked
+                    checked={settings.notifications.paymentConfirmations}
+                    onChange={(e) => handleNotificationChange("paymentConfirmations", e.target.checked)}
                   />
                   <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
@@ -254,7 +411,12 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.notifications.customerReviews}
+                    onChange={(e) => handleNotificationChange("customerReviews", e.target.checked)}
+                  />
                   <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
@@ -271,7 +433,8 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    defaultChecked
+                    checked={settings.notifications.weeklyReports}
+                    onChange={(e) => handleNotificationChange("weeklyReports", e.target.checked)}
                   />
                   <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
@@ -340,11 +503,31 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Success message */}
+          {message && (
+            <div className={`p-4 rounded-lg text-sm ${
+              message.includes("success") 
+                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
+                : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+            }`}>
+              {message}
+            </div>
+          )}
+
           {/* Save button */}
           <div className="flex justify-end">
-            <Button>
-              <Save className="h-4 w-4 mr-2" />
-              Save All Changes
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save All Changes
+                </>
+              )}
             </Button>
           </div>
         </div>
