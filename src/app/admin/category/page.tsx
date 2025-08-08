@@ -10,7 +10,6 @@ import {
   Filter,
   Eye,
   ArrowUpDown,
-  MoreHorizontal,
   Palette,
 } from "lucide-react";
 import { Button } from "@/components/Button";

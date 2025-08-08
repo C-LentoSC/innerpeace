@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Star,
   MessageSquare,
@@ -8,99 +10,44 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { useEffect, useState } from "react";
 
-// Mock data - in real app, this would come from your database
-const reviews = [
-  {
-    id: 1,
-    customer: {
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      avatar: null,
-    },
-    service: "Deep Tissue Massage",
-    rating: 5,
-    title: "Amazing experience!",
-    comment:
-      "I had the most relaxing massage ever. The therapist was professional and the ambiance was perfect. Will definitely come back!",
-    date: "2025-08-03",
-    status: "published",
-    replied: false,
-  },
-  {
-    id: 2,
-    customer: {
-      name: "Mike Chen",
-      email: "mike@example.com",
-      avatar: null,
-    },
-    service: "Swedish Massage",
-    rating: 4,
-    title: "Great service",
-    comment:
-      "Really enjoyed the massage. The facility is clean and staff is friendly. Only minor issue was the waiting time.",
-    date: "2025-08-01",
-    status: "published",
-    replied: true,
-  },
-  {
-    id: 3,
-    customer: {
-      name: "Emily Davis",
-      email: "emily@example.com",
-      avatar: null,
-    },
-    service: "Hot Stone Therapy",
-    rating: 5,
-    title: "Absolutely wonderful",
-    comment:
-      "The hot stone therapy was incredibly relaxing. The therapist Maya was excellent and very attentive to my needs.",
-    date: "2025-07-30",
-    status: "published",
-    replied: true,
-  },
-  {
-    id: 4,
-    customer: {
-      name: "Alex Rodriguez",
-      email: "alex@example.com",
-      avatar: null,
-    },
-    service: "Aromatherapy",
-    rating: 3,
-    title: "Decent experience",
-    comment:
-      "The aromatherapy was good but I expected more. The room could be a bit quieter as I could hear noise from outside.",
-    date: "2025-07-28",
-    status: "pending",
-    replied: false,
-  },
-  {
-    id: 5,
-    customer: {
-      name: "Lisa Wang",
-      email: "lisa@example.com",
-      avatar: null,
-    },
-    service: "Full Body Massage",
-    rating: 5,
-    title: "Outstanding service!",
-    comment:
-      "This place is a gem! The massage was perfect, the staff is incredibly professional, and the atmosphere is so peaceful. Highly recommend!",
-    date: "2025-07-25",
-    status: "published",
-    replied: false,
-  },
-];
+interface Review {
+  id: string;
+  userId: string;
+  serviceId?: string | null;
+  rating: number;
+  title?: string | null;
+  comment: string;
+  status: string; // approved | pending | rejected | hidden
+  createdAt: string;
+  updatedAt: string;
+  // joined
+  user?: { id: string; name: string | null; email: string | null };
+  service?: { id: string; name: string } | null;
+}
+
+interface ReviewFormData {
+  userId: string;
+  serviceId?: string | null;
+  rating: string; // keep as string for input
+  title: string;
+  comment: string;
+  status: string;
+}
+
+interface OptionItem { id: string; name: string }
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "published":
+    case "approved":
       return "bg-success/20 text-success border-success/20";
     case "pending":
       return "bg-warning/20 text-warning border-warning/20";
     case "hidden":
       return "bg-muted/20 text-muted-foreground border-muted/20";
+    case "rejected":
+      return "bg-destructive/20 text-destructive border-destructive/20";
     default:
       return "bg-muted/20 text-muted-foreground border-muted/20";
   }
@@ -126,13 +73,127 @@ const getInitials = (name: string) => {
 };
 
 export default function ReviewsPage() {
-  const averageRating =
-    reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<Review | null>(null);
+  const [users, setUsers] = useState<OptionItem[]>([]);
+  const [services, setServices] = useState<OptionItem[]>([]);
+  const [form, setForm] = useState<ReviewFormData>({
+    userId: "",
+    serviceId: "",
+    rating: "5",
+    title: "",
+    comment: "",
+    status: "approved",
+  });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        type UserDTO = { id: string; name: string | null; email: string | null };
+        type ServiceDTO = { id: string; name: string };
+        const [r, u, s] = await Promise.all([
+          fetch("/api/reviews").then((res) => res.json() as Promise<Review[]>),
+          fetch("/api/users").then((res) => res.json() as Promise<UserDTO[]>),
+          fetch("/api/services").then((res) => res.json() as Promise<ServiceDTO[]>),
+        ]);
+        setReviews(Array.isArray(r) ? r : []);
+        setUsers(u.map((x) => ({ id: x.id, name: x.name || x.email || "Unknown" })));
+        setServices(s.map((x) => ({ id: x.id, name: x.name })));
+      } catch (e) {
+        console.error("Failed to load reviews:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const averageRating = reviews.length
+    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+    : 0;
   const totalReviews = reviews.length;
-  const publishedReviews = reviews.filter(
-    (r) => r.status === "published"
-  ).length;
+  const publishedReviews = reviews.filter((r) => r.status === "approved").length;
   const pendingReviews = reviews.filter((r) => r.status === "pending").length;
+
+  const openModal = (r?: Review) => {
+    if (r) {
+      setEditing(r);
+      setForm({
+        userId: r.userId,
+        serviceId: r.serviceId || "",
+        rating: String(r.rating),
+        title: r.title || "",
+        comment: r.comment,
+        status: r.status,
+      });
+    } else {
+      setEditing(null);
+      setForm({ userId: "", serviceId: "", rating: "5", title: "", comment: "", status: "approved" });
+    }
+    setShowModal(true);
+  };
+
+  const saveReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      userId: form.userId,
+      serviceId: form.serviceId || null,
+      rating: Number(form.rating),
+      title: form.title || null,
+      comment: form.comment,
+      status: form.status,
+    };
+    const url = editing ? `/api/reviews/${editing.id}` : "/api/reviews";
+    const method = editing ? "PUT" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const refreshed = await fetch("/api/reviews").then((x) => x.json());
+      setReviews(refreshed);
+      setShowModal(false);
+      setEditing(null);
+    } else {
+      const err = await res.json();
+      alert(err.error || "Failed to save review");
+    }
+  };
+
+  const deleteReview = async (id: string) => {
+    const res = await fetch(`/api/reviews/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+    }
+  };
+
+  const setStatus = async (r: Review, status: string) => {
+    const res = await fetch(`/api/reviews/${r.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) {
+      const updated = await fetch("/api/reviews").then((x) => x.json());
+      setReviews(updated);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 bg-muted rounded w-1/4" />
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 bg-muted rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -146,11 +207,12 @@ export default function ReviewsPage() {
             Manage customer reviews and feedback
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex gap-2">
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />
             Filter Reviews
           </Button>
+          <Button size="sm" onClick={() => openModal()}>Add Review</Button>
         </div>
       </div>
 
@@ -263,13 +325,13 @@ export default function ReviewsPage() {
               <div className="flex items-start space-x-4">
                 <div className="bg-primary/20 h-12 w-12 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-primary">
-                    {getInitials(review.customer.name)}
+                    {getInitials(review.user?.name || review.user?.email || "User")}
                   </span>
                 </div>
                 <div>
                   <div className="flex items-center space-x-2 mb-1">
                     <h3 className="font-medium text-foreground">
-                      {review.customer.name}
+                      {review.user?.name || 'Unknown User'}
                     </h3>
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
@@ -278,16 +340,12 @@ export default function ReviewsPage() {
                     >
                       {review.status}
                     </span>
-                    {review.replied && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info/20 text-info">
-                        Replied
-                      </span>
-                    )}
+                    {/* reply badge removed; backend does not track replied */}
                   </div>
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-1">
-                    <span>{review.service}</span>
+                    <span>{review.service?.name || 'General'}</span>
                     <span>•</span>
-                    <span>{new Date(review.date).toLocaleDateString()}</span>
+                    <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     {renderStars(review.rating)}
@@ -310,15 +368,17 @@ export default function ReviewsPage() {
 
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <div className="flex space-x-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => openModal(review)}>
                   <Reply className="h-4 w-4 mr-2" />
-                  Reply
+                  Edit
                 </Button>
-                {review.status === "pending" && (
-                  <Button size="sm">Approve</Button>
+                {review.status === 'pending' && (
+                  <Button size="sm" onClick={() => setStatus(review, 'approved')}>
+                    Approve
+                  </Button>
                 )}
-                {review.status === "published" && (
-                  <Button variant="outline" size="sm">
+                {review.status === 'approved' && (
+                  <Button variant="outline" size="sm" onClick={() => setStatus(review, 'hidden')}>
                     Hide
                   </Button>
                 )}
@@ -327,6 +387,7 @@ export default function ReviewsPage() {
                 variant="outline"
                 size="sm"
                 className="text-destructive hover:text-destructive"
+                onClick={() => deleteReview(review.id)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -334,6 +395,74 @@ export default function ReviewsPage() {
           </div>
         ))}
       </div>
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">{editing ? "Edit Review" : "Add Review"}</h2>
+              <button onClick={() => { setShowModal(false); setEditing(null); }} className="text-muted-foreground hover:text-foreground">✕</button>
+            </div>
+            <form onSubmit={saveReview} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">User *</label>
+                <select
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  value={form.userId}
+                  onChange={(e) => setForm({ ...form, userId: e.target.value })}
+                  required
+                >
+                  <option value="">Select user</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Service</label>
+                <select
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                  value={form.serviceId || ""}
+                  onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
+                >
+                  <option value="">General</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Rating *</label>
+                  <input type="number" min={1} max={5} className="w-full px-3 py-2 border border-border rounded-md bg-background" value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <select className="w-full px-3 py-2 border border-border rounded-md bg-background" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="hidden">Hidden</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Title</label>
+                <input className="w-full px-3 py-2 border border-border rounded-md bg-background" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Comment *</label>
+                <textarea className="w-full px-3 py-2 border border-border rounded-md bg-background" rows={4} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} required />
+              </div>
+              <div className="flex space-x-3 pt-2">
+                <Button type="submit" className="flex-1">{editing ? "Update" : "Add"} Review</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowModal(false); setEditing(null); }}>Cancel</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
