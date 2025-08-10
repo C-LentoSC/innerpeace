@@ -31,7 +31,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { name, description, duration, price, originalPrice, isActive, popularity, startDate, endDate } = body;
+    const { name, description, duration, price, originalPrice, isActive, popularity, image, startDate, endDate } = body;
 
     if (!name || !description || !duration || !price) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -47,6 +47,7 @@ export async function PUT(
         originalPrice: originalPrice ? parseFloat(originalPrice) : null,
         isActive: Boolean(isActive),
         popularity: popularity || null,
+        image: image || null,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
       },

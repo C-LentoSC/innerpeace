@@ -62,30 +62,57 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user, trigger, session }) {
       if (user) {
         // On sign in, copy fields from user
-        token.role = (user as any).role;
-        token.firstName = (user as any).firstName;
-        token.lastName = (user as any).lastName;
-        token.name = user.name;
-        token.email = user.email;
+        const u = user as {
+          role?: string;
+          firstName?: string;
+          lastName?: string;
+          name?: string | null;
+          email?: string | null;
+        };
+        const t = token as Record<string, unknown>;
+        if (typeof u.role === "string") t.role = u.role;
+        if (typeof u.firstName === "string") t.firstName = u.firstName;
+        if (typeof u.lastName === "string") t.lastName = u.lastName;
+        if (typeof u.name === "string") t.name = u.name;
+        if (typeof u.email === "string") t.email = u.email;
       }
-      if (trigger === "update" && session) {
+      if (trigger === "update" && session && typeof session === "object") {
         // When session.update is called from the client
-        if ((session as any).name !== undefined) token.name = (session as any).name as string;
-        if ((session as any).email !== undefined) token.email = (session as any).email as string;
-        if ((session as any).firstName !== undefined) token.firstName = (session as any).firstName as string;
-        if ((session as any).lastName !== undefined) token.lastName = (session as any).lastName as string;
+        const s = session as {
+          name?: string;
+          email?: string;
+          firstName?: string;
+          lastName?: string;
+        };
+        const t = token as Record<string, unknown>;
+        if (typeof s.name === "string") t.name = s.name;
+        if (typeof s.email === "string") t.email = s.email;
+        if (typeof s.firstName === "string") t.firstName = s.firstName;
+        if (typeof s.lastName === "string") t.lastName = s.lastName;
       }
       return token;
     },
     session({ session, token }) {
-      session.user.id = token.sub!;
-      session.user.role = token.role as string;
-      // Assign strings only, avoid undefined to satisfy types
-      session.user.firstName = (token.firstName as string) || (session.user.firstName as string) || "";
-      session.user.lastName = (token.lastName as string) || (session.user.lastName as string) || "";
-      // Ensure header and UI get updated name/email
-      session.user.name = (token.name as string) || (session.user.name as string) || "";
-      session.user.email = (token.email as string) || (session.user.email as string) || "";
+      // id
+      if (typeof token.sub === "string") {
+        session.user.id = token.sub;
+      }
+      const t = token as Record<string, unknown>;
+      // role
+      if (typeof t.role === "string") {
+        type MutableUser = typeof session.user & { role?: string };
+        (session.user as MutableUser).role = t.role;
+      }
+      // first/last name
+      const firstName = typeof t.firstName === "string" ? t.firstName : undefined;
+      const lastName = typeof t.lastName === "string" ? t.lastName : undefined;
+      session.user.firstName = firstName || (session.user.firstName as string) || "";
+      session.user.lastName = lastName || (session.user.lastName as string) || "";
+      // name/email
+      const name = typeof t.name === "string" ? t.name : undefined;
+      const email = typeof t.email === "string" ? t.email : undefined;
+      session.user.name = name || (session.user.name as string) || "";
+      session.user.email = email || (session.user.email as string) || "";
       return session;
     },
   },

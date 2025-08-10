@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 export async function GET() {
   try {
     const gallery = await prisma.gallery.findMany({
-      orderBy: { createdAt: 'desc' }
+      where: { status: 'active' },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     return NextResponse.json(gallery);

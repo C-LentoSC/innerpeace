@@ -44,11 +44,33 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/analytics")
-      .then((res) => res.json())
-      .then(setData)
-      .catch(() => setError("Failed to load analytics"))
-      .finally(() => setLoading(false));
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/analytics", { cache: "no-store" });
+        if (!res.ok) throw new Error("Analytics API error");
+        const json = await res.json();
+        // Basic shape validation
+        const safe: Analytics = {
+          revenue: { current: json?.revenue?.current ?? 0 },
+          bookings: { current: json?.bookings?.current ?? 0 },
+          customers: { current: json?.customers?.current ?? 0 },
+          avgRating: { current: json?.avgRating?.current ?? 0 },
+          topServices: Array.isArray(json?.topServices) ? json.topServices : [],
+          recentActivity: Array.isArray(json?.recentActivity)
+            ? json.recentActivity
+            : [],
+        };
+        if (active) setData(safe);
+      } catch {
+        if (active) setError("Failed to load analytics");
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loading) return <div className="p-6 text-center">Loading analytics...</div>;
@@ -79,7 +101,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
               <p className="text-2xl font-bold text-foreground mt-2">
-                ₹{data.revenue.current.toLocaleString()}
+                ₹{(data?.revenue?.current ?? 0).toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Lifetime earnings</p>
             </div>
@@ -94,7 +116,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
               <p className="text-2xl font-bold text-foreground mt-2">
-                {data.bookings.current}
+                {data?.bookings?.current ?? 0}
               </p>
               <p className="text-xs text-muted-foreground mt-1">All time bookings</p>
             </div>
@@ -109,7 +131,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Unique Customers</p>
               <p className="text-2xl font-bold text-foreground mt-2">
-                {data.customers.current}
+                {data?.customers?.current ?? 0}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Happy clients</p>
             </div>
@@ -124,7 +146,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
               <p className="text-2xl font-bold text-foreground mt-2">
-                {data.avgRating.current.toFixed(1)}
+                {(data?.avgRating?.current ?? 0).toFixed(1)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Customer satisfaction</p>
             </div>
@@ -144,7 +166,7 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="space-y-4">
-            {data.topServices.map((service, index) => (
+            {(data?.topServices ?? []).map((service, index) => (
               <div key={service.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-primary/10 text-primary">
@@ -171,7 +193,7 @@ export default function AnalyticsPage() {
             <Activity className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="space-y-3">
-            {data.recentActivity.slice(0, 6).map((activity) => (
+            {(data?.recentActivity ?? []).slice(0, 6).map((activity) => (
               <div key={activity.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                 <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 bg-primary"></div>
                 <div className="flex-1 min-w-0">

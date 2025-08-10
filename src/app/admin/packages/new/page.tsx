@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, DollarSign, Clock, FileText } from 'lucide-react';
+
 
 export default function NewPackagePage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData] = useState({
     name: '',
     description: '',
     price: '',

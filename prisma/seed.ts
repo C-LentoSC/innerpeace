@@ -97,6 +97,7 @@ async function main() {
       duration: 60,
       price: 2500,
       categoryId: massageCategory.id,
+      image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=80",
     },
   });
 
@@ -107,6 +108,7 @@ async function main() {
       duration: 90,
       price: 3500,
       categoryId: massageCategory.id,
+      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80",
     },
   });
 
@@ -117,6 +119,7 @@ async function main() {
       duration: 75,
       price: 4000,
       categoryId: massageCategory.id,
+      image: "https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=800&q=80",
     },
   });
 
@@ -127,6 +130,7 @@ async function main() {
       duration: 45,
       price: 2000,
       categoryId: facialCategory.id,
+      image: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80",
     },
   });
 
@@ -137,10 +141,87 @@ async function main() {
       duration: 60,
       price: 2800,
       categoryId: facialCategory.id,
+      image: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=800&q=80",
     },
   });
 
   console.log("Created services");
+
+  // Reset and create packages
+  await prisma.package.deleteMany();
+  await prisma.package.createMany({
+    data: [
+      {
+        name: "The Inner Peace Ritual",
+        description:
+          "Deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
+        duration: 90,
+        price: 5000,
+        originalPrice: 6500,
+        isActive: true,
+        popularity: "Most Popular",
+        image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&q=80",
+        categoryId: aromaCategory.id, // Aromatherapy package
+        startDate: new Date(),
+      },
+      {
+        name: "Deep Oil Bath",
+        description:
+          "Full-body oil massage focusing on relaxation and muscle recovery.",
+        duration: 75,
+        price: 4900,
+        originalPrice: 5900,
+        isActive: true,
+        popularity: "Premium",
+        image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200&q=80",
+        categoryId: massageCategory.id, // Massage package
+      },
+      {
+        name: "Detox & Glow Facial",
+        description:
+          "Purifying facial with gentle exfoliation and hydration for radiant skin.",
+        duration: 60,
+        price: 3200,
+        isActive: true,
+        image: "https://images.unsplash.com/photo-1512291313931-d4291048e7b6?w=1200&q=80",
+        categoryId: facialCategory.id, // Facial package
+      },
+      {
+        name: "Hot Stone Relaxation",
+        description:
+          "Therapeutic hot stone massage to relieve deep-seated tension.",
+        duration: 80,
+        price: 4200,
+        originalPrice: 4600,
+        isActive: true,
+        image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80",
+        categoryId: massageCategory.id, // Massage package
+      },
+      {
+        name: "Aroma Bliss Combo",
+        description:
+          "Aromatherapy massage + scalp massage for complete rejuvenation.",
+        duration: 70,
+        price: 3800,
+        isActive: true,
+        popularity: "Trending",
+        image: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1200&q=80",
+        categoryId: aromaCategory.id, // Aromatherapy package
+      },
+      {
+        name: "Couple's Serenity Package",
+        description:
+          "Side-by-side therapy session designed for couples to unwind together.",
+        duration: 90,
+        price: 8900,
+        isActive: true,
+        image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1200&q=80",
+        categoryId: bodyCategory.id, // Body treatment package
+      },
+    ],
+  });
+
+  console.log("Created packages");
 
   // Create bookings
   await prisma.booking.create({

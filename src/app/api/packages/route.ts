@@ -5,34 +5,72 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const packages = await prisma.package.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+    const [packages, categoriesRaw, totalBookings] = await Promise.all([
+      prisma.package.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { category: true },
+      }),
+      prisma.category.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+        include: { _count: { select: { packages: true } } },
+      }),
+      prisma.booking.count(),
+    ]);
 
-    // Get total bookings count for overall stats
-    const totalBookings = await prisma.booking.count();
-
-    // Calculate average price from packages
-    const avgPrice = packages.length > 0 
-      ? Math.round(packages.reduce((sum, pkg) => Number(pkg.price), 0) / packages.length)
+    const avgPrice = packages.length > 0
+      ? Math.round(packages.reduce((sum, pkg) => sum + Number(pkg.price), 0) / packages.length)
       : 0;
 
+        type CategoryWithCount = {
+      id: string;
+      name: string;
+      slug: string;
+      color: string | null;
+      icon: string | null;
+      isActive: boolean;
+      sortOrder: number;
+      _count?: { packages: number } | null;
+    };
+
+    const categories = categoriesRaw.map((c: CategoryWithCount) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      color: c.color,
+      icon: c.icon,
+      isActive: c.isActive,
+      sortOrder: c.sortOrder,
+      packagesCount: c._count?.packages ?? 0,
+    }));
+
     return NextResponse.json({
-      packages: packages.map(pkg => ({
-        ...pkg,
+      packages: packages.map((pkg) => ({
+        id: pkg.id,
+        name: pkg.name,
+        description: pkg.description,
+        duration: pkg.duration,
         price: Number(pkg.price),
         originalPrice: pkg.originalPrice ? Number(pkg.originalPrice) : null,
+        isActive: pkg.isActive,
+        popularity: pkg.popularity,
+        image: pkg.image,
+        startDate: pkg.startDate?.toISOString() || null,
+        endDate: pkg.endDate?.toISOString() || null,
+        category: pkg.category
+          ? { id: pkg.category.id, name: pkg.category.name, slug: pkg.category.slug }
+          : null,
+        categoryId: pkg.categoryId ?? null,
         createdAt: pkg.createdAt.toISOString(),
         updatedAt: pkg.updatedAt.toISOString(),
-        startDate: pkg.startDate?.toISOString() || null,
-        endDate: pkg.endDate?.toISOString() || null
       })),
+      categories,
       stats: {
         totalPackages: packages.length,
-        activePackages: packages.filter(pkg => pkg.isActive).length,
+        activePackages: packages.filter((p) => p.isActive).length,
         avgPrice,
-        totalBookings
-      }
+        totalBookings,
+      },
     });
   } catch (error) {
     console.error('Error fetching packages:', error);
@@ -43,7 +81,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, duration, price, originalPrice, isActive, popularity, startDate, endDate } = body;
+    const { name, description, duration, price, originalPrice, isActive, popularity, image, startDate, endDate } = body;
 
     if (!name || !description || !duration || !price) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -58,6 +96,7 @@ export async function POST(request: NextRequest) {
         originalPrice: originalPrice ? parseFloat(originalPrice) : null,
         isActive: Boolean(isActive),
         popularity: popularity || null,
+        image: image || null,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
       },

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, MapPin } from 'lucide-react';
+
 
 export default function NewCustomerPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData] = useState({
     name: '',
     email: '',
     phone: '',

@@ -42,8 +42,20 @@ const iconMap: { [key: string]: React.ReactNode } = {
   Package: "📦",
 };
 
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  price: number;
+  categoryId: string;
+  image?: string;
+  isActive: boolean;
+}
+
 export default function CategoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,12 +70,14 @@ export default function CategoryPage() {
     color: "#c9d1a0",
     icon: "Sparkles",
     isActive: true,
+    selectedServices: [] as string[],
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Load categories on component mount
+  // Load categories and services on component mount
   useEffect(() => {
     loadCategories();
+    loadServices();
   }, []);
 
   const loadCategories = async () => {
@@ -88,6 +102,49 @@ export default function CategoryPage() {
     }
   };
 
+  const loadServices = async () => {
+    try {
+      const response = await fetch('/api/services');
+      if (response.ok) {
+        const fetchedServices = await response.json();
+        setServices(fetchedServices);
+      }
+    } catch (err) {
+      console.error('Failed to load services:', err);
+    }
+  };
+
+  const updateServiceAssignments = async (categoryId: string, selectedServiceIds: string[]) => {
+    try {
+      // First, unassign all services from this category
+      const currentCategoryServices = services.filter(service => service.categoryId === categoryId);
+      for (const service of currentCategoryServices) {
+        if (!selectedServiceIds.includes(service.id)) {
+          await fetch(`/api/services/${service.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...service, categoryId: null })
+          });
+        }
+      }
+      
+      // Then, assign selected services to this category
+      for (const serviceId of selectedServiceIds) {
+        const service = services.find(s => s.id === serviceId);
+        if (service) {
+          await fetch(`/api/services/${serviceId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...service, categoryId })
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update service assignments:', err);
+      throw err;
+    }
+  };
+
   // Filter categories based on search term
   const filteredCategories = categories.filter(
     (category) =>
@@ -109,8 +166,15 @@ export default function CategoryPage() {
         isActive: formData.isActive,
       };
 
-      await createCategory(categoryData);
+      const newCategory = await createCategory(categoryData);
+      
+      // Update service assignments
+      if (formData.selectedServices.length > 0) {
+        await updateServiceAssignments(newCategory.id, formData.selectedServices);
+      }
+      
       await loadCategories(); // Refresh the list
+      await loadServices(); // Refresh services to show updated assignments
       setShowAddModal(false);
       setFormData({
         name: "",
@@ -118,6 +182,7 @@ export default function CategoryPage() {
         color: "#c9d1a0",
         icon: "Sparkles",
         isActive: true,
+        selectedServices: [],
       });
     } catch (err) {
       setError(
@@ -142,7 +207,12 @@ export default function CategoryPage() {
       };
 
       await updateCategory(selectedCategory.id, categoryData);
+      
+      // Update service assignments
+      await updateServiceAssignments(selectedCategory.id, formData.selectedServices);
+      
       await loadCategories(); // Refresh the list
+      await loadServices(); // Refresh services to show updated assignments
       setShowEditModal(false);
       setSelectedCategory(null);
       setFormData({
@@ -151,6 +221,7 @@ export default function CategoryPage() {
         color: "#c9d1a0",
         icon: "Sparkles",
         isActive: true,
+        selectedServices: [],
       });
     } catch (err) {
       setError(
@@ -176,12 +247,15 @@ export default function CategoryPage() {
 
   const openEditModal = (category: Category) => {
     setSelectedCategory(category);
+    // Get services assigned to this category
+    const categoryServices = services.filter(service => service.categoryId === category.id).map(service => service.id);
     setFormData({
       name: category.name,
       description: category.description || "",
       color: category.color || "#c9d1a0",
       icon: category.icon || "Sparkles",
       isActive: category.isActive,
+      selectedServices: categoryServices,
     });
     setShowEditModal(true);
   };
@@ -554,6 +628,40 @@ export default function CategoryPage() {
                   Active
                 </label>
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Assign Services
+                </label>
+                <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
+                  {services.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No services available</p>
+                  ) : (
+                    services.map((service) => (
+                      <div key={service.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`service-${service.id}`}
+                          checked={formData.selectedServices.includes(service.id)}
+                          onChange={(e) => {
+                            const updatedServices = e.target.checked
+                              ? [...formData.selectedServices, service.id]
+                              : formData.selectedServices.filter(id => id !== service.id);
+                            setFormData({ ...formData, selectedServices: updatedServices });
+                          }}
+                          className="rounded border-border text-primary focus:ring-primary"
+                        />
+                        <label
+                          htmlFor={`service-${service.id}`}
+                          className="text-sm text-foreground flex-1 cursor-pointer"
+                        >
+                          {service.name} - ₹{service.price} ({service.duration}min)
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
@@ -660,6 +768,40 @@ export default function CategoryPage() {
                 >
                   Active
                 </label>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Assign Services
+                </label>
+                <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
+                  {services.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No services available</p>
+                  ) : (
+                    services.map((service) => (
+                      <div key={service.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`edit-service-${service.id}`}
+                          checked={formData.selectedServices.includes(service.id)}
+                          onChange={(e) => {
+                            const updatedServices = e.target.checked
+                              ? [...formData.selectedServices, service.id]
+                              : formData.selectedServices.filter(id => id !== service.id);
+                            setFormData({ ...formData, selectedServices: updatedServices });
+                          }}
+                          className="rounded border-border text-primary focus:ring-primary"
+                        />
+                        <label
+                          htmlFor={`edit-service-${service.id}`}
+                          className="text-sm text-foreground flex-1 cursor-pointer"
+                        >
+                          {service.name} - ₹{service.price} ({service.duration}min)
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">

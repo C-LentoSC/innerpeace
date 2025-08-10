@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  useSession(); // Keep the session authentication state active
+  const { data: session } = useSession(); // Keep the session authentication state active
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,7 +33,7 @@ const Header = () => {
     { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
     { label: "Packages", href: "/packages" },
-    // ...(session ? [{ label: "Dashboard", href: "/dashboard" }] : []),
+    ...(session ? [{ label: "My Bookings", href: "/account/bookings" }] : []),
   ];
 
   return (

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, Clock, User, Package } from 'lucide-react';
+
 
 export default function NewBookingPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData] = useState({
     customerId: '',
     serviceId: '',
     therapistId: '',

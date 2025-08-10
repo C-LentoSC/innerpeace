@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
             category: true,
           },
         },
+        package: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -74,18 +75,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      customerId,
-      therapistId,
-      serviceId,
-      date,
-      time,
-      duration,
-      price,
-      notes,
-    } = body;
+    const { customerId, therapistId, serviceId, packageId, date, time, duration, price, notes } = body;
 
-    if (!customerId || !therapistId || !serviceId || !date || !time || !duration || !price) {
+    if (!customerId || !date || !time || !duration || !price) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -95,8 +87,9 @@ export async function POST(request: NextRequest) {
     const booking = await prisma.booking.create({
       data: {
         customerId,
-        therapistId,
-        serviceId,
+        therapistId: therapistId || null,
+        serviceId: serviceId || null,
+        packageId: packageId || null,
         date: new Date(date),
         time,
         duration: parseInt(duration),
@@ -124,6 +117,7 @@ export async function POST(request: NextRequest) {
             category: true,
           },
         },
+        package: true,
       },
     });
 

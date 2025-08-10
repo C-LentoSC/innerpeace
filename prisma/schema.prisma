@@ -114,6 +114,7 @@ model Category {
   sortOrder   Int      @default(0)
   
   services    Service[]
+  packages    Package[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -126,6 +127,7 @@ model Service {
   duration    Int      // minutes
   price       Decimal
   categoryId  String
+  image       String?  // service image URL
   isActive    Boolean  @default(true)
   
   category Category  @relation(fields: [categoryId], references: [id])
@@ -139,18 +141,24 @@ model Service {
 model Booking {
   id          String   @id @default(cuid())
   customerId  String
-  therapistId String
-  serviceId   String
+  therapistId String?
+  serviceId   String?
+  packageId   String?
   date        DateTime
   time        String
   duration    Int      // minutes
   price       Decimal
   status      String   @default("pending")
   notes       String?
+  // Per-booking contact snapshot (do NOT mutate global user on checkout)
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
   
-  customer  User    @relation("CustomerBookings", fields: [customerId], references: [id])
-  therapist User    @relation("TherapistBookings", fields: [therapistId], references: [id])
-  service   Service @relation(fields: [serviceId], references: [id])
+  customer  User     @relation("CustomerBookings", fields: [customerId], references: [id])
+  therapist User?    @relation("TherapistBookings", fields: [therapistId], references: [id])
+  service   Service? @relation(fields: [serviceId], references: [id])
+  package   Package? @relation(fields: [packageId], references: [id])
 
   
   createdAt DateTime @default(now())
@@ -159,6 +167,8 @@ model Booking {
   @@index([customerId])
   @@index([therapistId])
   @@index([serviceId])
+  @@index([packageId])
+  @@index([date, time])
 }
 
 model Package {
@@ -173,6 +183,11 @@ model Package {
   image       String?
   startDate   DateTime?
   endDate     DateTime?
+  // Optional link to Category for grouping/filtering in Packages page
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  
+  bookings    Booking[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

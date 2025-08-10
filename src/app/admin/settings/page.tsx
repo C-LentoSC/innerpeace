@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -38,6 +38,7 @@ interface Settings {
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session, update, status } = useSession();
+  const userId = (session?.user as { id?: string | null } | undefined)?.id ?? undefined;
   const [settings, setSettings] = useState<Settings>({
     adminName: "John Doe",
     adminEmail: "admin@innerpeace.com",
@@ -59,12 +60,26 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch(userId ? `/api/settings?userId=${encodeURIComponent(userId)}` : "/api/settings");
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+      }
+    } catch (err) {
+      console.error("Error fetching settings:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
   useEffect(() => {
     // Fetch when session is ready so we can include userId
     if (status !== "loading") {
       fetchSettings();
     }
-  }, [status, (session as any)?.user?.id]);
+  }, [status, fetchSettings]);
 
   // Prefill admin fields from the logged-in user's session
   useEffect(() => {
@@ -78,20 +93,7 @@ export default function SettingsPage() {
     }
   }, [session]);
 
-  const fetchSettings = async () => {
-    try {
-      const userId = (session as any)?.user?.id;
-      const response = await fetch(userId ? `/api/settings?userId=${encodeURIComponent(userId)}` : "/api/settings");
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data);
-      }
-    } catch (err) {
-      console.error("Error fetching settings:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const handleSave = async () => {
     setSaving(true);
@@ -105,7 +107,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({
           ...settings,
-          userId: (session as any)?.user?.id ?? undefined,
+          userId,
         }),
       });
 
@@ -125,7 +127,7 @@ export default function SettingsPage() {
           await update?.({
             name: settings.adminName,
             email: settings.adminEmail,
-          } as any);
+          });
         } catch {}
         // Refresh any server components reading session
         router.refresh();

@@ -1,19 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-const galleryImages = [
-  { src: "/assets/images/1.jpg", alt: "Spa accessories" },
-  { src: "/assets/images/2.jpg", alt: "Massage therapy" },
-  { src: "/assets/images/3.jpg", alt: "Wellness treatment" },
-  { src: "/assets/images/4.jpg", alt: "Hot stone therapy" },
-  { src: "/assets/images/1.png", alt: "Serene setup" },
-  { src: "/assets/images/2.png", alt: "Relaxation" },
-  { src: "/assets/images/3.png", alt: "Peaceful ambiance" },
-  { src: "/assets/images/4.png", alt: "Zen garden" },
+type GalleryItem = { url: string; title: string; alt?: string };
+type ApiGalleryItem = { url: string; title: string; alt: string };
+
+const fallbackImages: GalleryItem[] = [
+  { url: "/assets/images/1.jpg", title: "Spa accessories", alt: "Spa accessories" },
+  { url: "/assets/images/2.jpg", title: "Massage therapy", alt: "Massage therapy" },
+  { url: "/assets/images/3.jpg", title: "Wellness treatment", alt: "Wellness treatment" },
+  { url: "/assets/images/4.jpg", title: "Hot stone therapy", alt: "Hot stone therapy" },
+  { url: "/assets/images/1.png", title: "Serene setup", alt: "Serene setup" },
+  { url: "/assets/images/2.png", title: "Relaxation", alt: "Relaxation" },
+  { url: "/assets/images/3.png", title: "Peaceful ambiance", alt: "Peaceful ambiance" },
+  { url: "/assets/images/4.png", title: "Zen garden", alt: "Zen garden" },
 ];
 
 const GalleryGridSection = () => {
@@ -21,6 +24,7 @@ const GalleryGridSection = () => {
   const gridRef = useRef<HTMLDivElement>(null);
   const centerTextRef = useRef<HTMLDivElement>(null);
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [items, setItems] = useState<GalleryItem[]>([]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -74,6 +78,34 @@ const GalleryGridSection = () => {
     return () => ctx.revert();
   }, []);
 
+  // Fetch active gallery items for root gallery (no UI change)
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/gallery", { cache: "no-store" });
+        const data = await res.json();
+        const mapped: GalleryItem[] = Array.isArray(data)
+          ? data.map((g: ApiGalleryItem) => ({ url: g.url, title: g.title, alt: g.alt || g.title }))
+          : [];
+        if (active) setItems(mapped);
+      } catch {
+        // ignore; fallback will be used
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Maintain exact layout; use first 6 items. Fallback to static assets to fill missing slots.
+  const display = (() => {
+    const fromApi = items.slice(0, 6);
+    if (fromApi.length >= 6) return fromApi;
+    const needed = 6 - fromApi.length;
+    return [...fromApi, ...fallbackImages.slice(0, needed)];
+  })();
+
   return (
     <section ref={sectionRef} className="py-20">
       <div className="my-container">
@@ -89,15 +121,16 @@ const GalleryGridSection = () => {
             className="relative md:col-span-2 md:row-span-1 rounded-xl overflow-hidden h-64 md:h-auto group"
           >
             <Image
-              src={galleryImages[0].src}
-              alt={galleryImages[0].alt}
+              src={display[0].url}
+              alt={display[0].alt || display[0].title}
               fill
+              unoptimized
               className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="font-medium text-lg">{galleryImages[0].alt}</h3>
+              <h3 className="font-medium text-lg">{display[0].title}</h3>
             </div>
           </div>
 
@@ -109,15 +142,16 @@ const GalleryGridSection = () => {
             className="relative md:col-start-3 md:col-span-2 md:row-span-1 rounded-xl overflow-hidden h-64 md:h-auto group"
           >
             <Image
-              src={galleryImages[1].src}
-              alt={galleryImages[1].alt}
+              src={display[1].url}
+              alt={display[1].alt || display[1].title}
               fill
+              unoptimized
               className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="font-medium text-lg">{galleryImages[1].alt}</h3>
+              <h3 className="font-medium text-lg">{display[1].title}</h3>
             </div>
           </div>
 
@@ -129,15 +163,16 @@ const GalleryGridSection = () => {
             className="relative md:col-span-1 md:row-span-2 rounded-xl overflow-hidden h-96 md:h-auto group"
           >
             <Image
-              src={galleryImages[2].src}
-              alt={galleryImages[2].alt}
+              src={display[2].url}
+              alt={display[2].alt || display[2].title}
               fill
+              unoptimized
               className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 25vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="font-medium text-lg">{galleryImages[2].alt}</h3>
+              <h3 className="font-medium text-lg">{display[2].title}</h3>
             </div>
           </div>
 
@@ -162,15 +197,16 @@ const GalleryGridSection = () => {
             className="relative md:col-start-4 md:col-span-1 md:row-span-2 rounded-xl overflow-hidden h-96 md:h-auto group"
           >
             <Image
-              src={galleryImages[3].src}
-              alt={galleryImages[3].alt}
+              src={display[3].url}
+              alt={display[3].alt || display[3].title}
               fill
+              unoptimized
               className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 25vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="font-medium text-lg">{galleryImages[3].alt}</h3>
+              <h3 className="font-medium text-lg">{display[3].title}</h3>
             </div>
           </div>
 
@@ -182,15 +218,16 @@ const GalleryGridSection = () => {
             className="relative md:col-start-2 md:col-span-1 md:row-start-3 rounded-xl overflow-hidden h-64 md:h-auto group"
           >
             <Image
-              src={galleryImages[4].src}
-              alt={galleryImages[4].alt}
+              src={display[4].url}
+              alt={display[4].alt || display[4].title}
               fill
+              unoptimized
               className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 25vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="font-medium text-lg">{galleryImages[4].alt}</h3>
+              <h3 className="font-medium text-lg">{display[4].title}</h3>
             </div>
           </div>
 
@@ -202,15 +239,16 @@ const GalleryGridSection = () => {
             className="relative md:col-start-3 md:col-span-1 md:row-start-3 rounded-xl overflow-hidden h-64 md:h-auto group"
           >
             <Image
-              src={galleryImages[5].src}
-              alt={galleryImages[5].alt}
+              src={display[5].url}
+              alt={display[5].alt || display[5].title}
               fill
+              unoptimized
               className="object-cover w-full h-full transition-transform duration-300 ease-in-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 25vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="font-medium text-lg">{galleryImages[5].alt}</h3>
+              <h3 className="font-medium text-lg">{display[5].title}</h3>
             </div>
           </div>
         </div>
