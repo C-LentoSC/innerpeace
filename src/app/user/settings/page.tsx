@@ -2,23 +2,17 @@
 
 import { useState } from "react";
 import {
-  Settings as SettingsIcon,
   Bell,
   Shield,
   Palette,
   Clock,
   Mail,
-  Phone,
-  MapPin,
   Save,
   User,
-  Lock,
   CreditCard,
   Calendar,
   Heart,
-  Volume2,
   Smartphone,
-  Globe,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -30,7 +24,41 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("profile");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [settings, setSettings] = useState({
+  type Settings = {
+    // Profile Settings
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+
+    // Notification Settings
+    emailNotifications: boolean;
+    smsReminders: boolean;
+    promotionalEmails: boolean;
+    appointmentReminders: boolean;
+    reviewRequests: boolean;
+
+    // Privacy Settings
+    profileVisibility: "private" | "public" | "friends";
+    shareData: boolean;
+    analytics: boolean;
+
+    // Preferences
+    preferredLanguage: string;
+    timezone: string;
+    currency: string;
+    theme: "light" | "dark" | "auto";
+
+    // Booking Preferences
+    defaultDuration: number;
+    preferredTimeSlot: "morning" | "afternoon" | "evening";
+    autoRebook: boolean;
+    favoriteTherapists: number[] | string[];
+  };
+
+  const [settings, setSettings] = useState<Settings>({
     // Profile Settings
     firstName: session?.user?.firstName || "",
     lastName: session?.user?.lastName || "",
@@ -64,7 +92,10 @@ export default function SettingsPage() {
     favoriteTherapists: [],
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <K extends keyof Settings>(
+    field: K,
+    value: Settings[K]
+  ) => {
     setSettings((prev) => ({
       ...prev,
       [field]: value,
@@ -436,7 +467,7 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             handleInputChange(
                               "profileVisibility",
-                              e.target.value
+                              e.target.value as Settings["profileVisibility"]
                             )
                           }
                           className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
@@ -453,8 +484,7 @@ export default function SettingsPage() {
                             Share Usage Data
                           </h3>
                           <p className="text-xs text-slate-400">
-                            Help improve our services by sharing anonymous usage
-                            data
+                            Help improve our services by sharing anonymous usage data
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -470,172 +500,6 @@ export default function SettingsPage() {
                         </label>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Preferences Section */}
-            {activeSection === "preferences" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold modern-gradient-text mb-2">
-                    General Preferences
-                  </h2>
-                  <p className="text-slate-400">
-                    Customize your spa experience preferences.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Language
-                    </label>
-                    <select
-                      value={settings.preferredLanguage}
-                      onChange={(e) =>
-                        handleInputChange("preferredLanguage", e.target.value)
-                      }
-                      className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
-                    >
-                      <option value="en">English</option>
-                      <option value="hi">Hindi</option>
-                      <option value="ta">Tamil</option>
-                      <option value="te">Telugu</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Timezone
-                    </label>
-                    <select
-                      value={settings.timezone}
-                      onChange={(e) =>
-                        handleInputChange("timezone", e.target.value)
-                      }
-                      className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
-                    >
-                      <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                      <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-                      <option value="America/New_York">
-                        America/New_York (EST)
-                      </option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Currency
-                    </label>
-                    <select
-                      value={settings.currency}
-                      onChange={(e) =>
-                        handleInputChange("currency", e.target.value)
-                      }
-                      className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
-                    >
-                      <option value="INR">INR (₹)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Theme
-                    </label>
-                    <select
-                      value={settings.theme}
-                      onChange={(e) =>
-                        handleInputChange("theme", e.target.value)
-                      }
-                      className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
-                    >
-                      <option value="dark">Dark Golden</option>
-                      <option value="light">Light</option>
-                      <option value="auto">Auto</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Booking Preferences */}
-            {activeSection === "booking" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold modern-gradient-text mb-2">
-                    Booking Preferences
-                  </h2>
-                  <p className="text-slate-400">
-                    Set your default preferences for booking appointments.
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Default Session Duration
-                    </label>
-                    <select
-                      value={settings.defaultDuration}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "defaultDuration",
-                          parseInt(e.target.value)
-                        )
-                      }
-                      className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
-                    >
-                      <option value={30}>30 minutes</option>
-                      <option value={45}>45 minutes</option>
-                      <option value={60}>60 minutes</option>
-                      <option value={90}>90 minutes</option>
-                      <option value={120}>120 minutes</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Preferred Time Slot
-                    </label>
-                    <select
-                      value={settings.preferredTimeSlot}
-                      onChange={(e) =>
-                        handleInputChange("preferredTimeSlot", e.target.value)
-                      }
-                      className="w-full px-4 py-3 bg-glass-card border border-white-border rounded-xl text-foreground focus:border-warm-gold focus:ring-1 focus:ring-warm-gold"
-                    >
-                      <option value="morning">Morning (9 AM - 12 PM)</option>
-                      <option value="afternoon">
-                        Afternoon (12 PM - 5 PM)
-                      </option>
-                      <option value="evening">Evening (5 PM - 8 PM)</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-glass-card rounded-xl border border-white-border">
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground">
-                        Auto-Rebook
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        Automatically suggest rebooking after completed sessions
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.autoRebook}
-                        onChange={(e) =>
-                          handleInputChange("autoRebook", e.target.checked)
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-warm-gold/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-warm-gold"></div>
-                    </label>
                   </div>
                 </div>
               </div>

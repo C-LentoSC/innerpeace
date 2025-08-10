@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Calendar,
   Clock,
-  User,
   MapPin,
   Phone,
   Star,

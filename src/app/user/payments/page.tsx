@@ -13,7 +13,6 @@ import {
   XCircle,
   RefreshCw,
   Receipt,
-  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/Button";
 

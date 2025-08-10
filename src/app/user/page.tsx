@@ -8,7 +8,6 @@ import {
   TrendingUp,
   Star,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 
 export default async function UserDashboard() {

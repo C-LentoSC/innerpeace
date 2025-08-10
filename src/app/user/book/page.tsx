@@ -4,9 +4,6 @@ import { useState } from "react";
 import {
   Calendar,
   Clock,
-  User,
-  Package,
-  IndianRupee,
   Star,
   ChevronLeft,
   ChevronRight,
@@ -17,10 +14,32 @@ import Image from "next/image";
 
 export default function BookAppointmentPage() {
   const [step, setStep] = useState(1);
-  const [selectedService, setSelectedService] = useState<any>(null);
+  type Service = {
+    id: number;
+    name: string;
+    duration: number;
+    price: number;
+    originalPrice: number;
+    rating: number;
+    image: string;
+    description: string;
+    therapists: string[];
+  };
+
+  type Therapist = {
+    id: number;
+    name: string;
+    speciality: string;
+    experience: string;
+    rating: number;
+    image: string;
+  };
+
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [selectedTherapist, setSelectedTherapist] = useState<any>(null);
+  const [selectedTherapist, setSelectedTherapist] =
+    useState<Therapist | null>(null);
 
   // Mock data
   const services = [
@@ -139,11 +158,6 @@ export default function BookAppointmentPage() {
       therapist: selectedTherapist,
     });
     // Show success message or redirect
-  };
-
-  const getCurrentDate = () => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
   };
 
   const generateDateOptions = () => {
