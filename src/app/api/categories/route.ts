@@ -5,15 +5,43 @@ import { createCategorySchema } from "@/lib/validations";
 import { ZodError } from "zod";
 
 // GET - Fetch all categories
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q");
+
     const categories = await prisma.category.findMany({
+      where: q
+        ? {
+            OR: [
+              { name: { contains: q } },
+              { description: { contains: q } },
+            ],
+          }
+        : undefined,
       orderBy: {
         sortOrder: "asc",
       },
+      include: {
+        _count: { select: { services: true } },
+      },
     });
 
-    return NextResponse.json(categories);
+    const payload = categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      slug: c.slug,
+      color: c.color,
+      icon: c.icon,
+      isActive: c.isActive,
+      sortOrder: c.sortOrder,
+      servicesCount: c._count?.services ?? 0,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+    }));
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

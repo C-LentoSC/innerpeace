@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { CURRENCY } from "@/constants/data";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import BookingModal from "@/components/BookingModal";
 
 const PackagesPage = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -18,9 +19,17 @@ const PackagesPage = () => {
   const paginationRef = useRef<HTMLDivElement>(null);
   const packageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const [activeCategory, setActiveCategory] = useState("Category 1");
+  const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showBooking, setShowBooking] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState<number | string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  type UIPackage = { id: string; name: string; description: string; price: number; image?: string | null; categoryId?: string | null; category?: { id: string; name: string; slug: string } | null };
+  type UICategory = { id: string; name: string; slug: string; color?: string | null; packagesCount?: number };
+  const [packagesData, setPackagesData] = useState<UIPackage[]>([]);
+  const [categoriesData, setCategoriesData] = useState<UICategory[]>([]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -136,111 +145,65 @@ const PackagesPage = () => {
     return () => ctx.revert();
   }, []);
 
-  const packages = [
-    {
-      id: 1,
-      name: "The Inner Peace Ritual",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "5,000",
-      image: "/assets/images/1.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 2,
-      name: "Deep Oil bath",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "8,900",
-      image: "/assets/images/2.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 3,
-      name: "The Inner Peace Ritual",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "5,000",
-      image: "/assets/images/3.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 4,
-      name: "Deep Oil bath",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "8,900",
-      image: "/assets/images/4.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 5,
-      name: "The Inner Peace Ritual",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "5,000",
-      image: "/assets/images/5.png",
-      category: "Category 1",
-    },
-    {
-      id: 6,
-      name: "Deep Oil bath",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "8,900",
-      image: "/assets/images/6.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 7,
-      name: "The Inner Peace Ritual",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "5,000",
-      image: "/assets/images/1.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 8,
-      name: "Deep Oil bath",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "8,900",
-      image: "/assets/images/2.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 9,
-      name: "The Inner Peace Ritual",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "5,000",
-      image: "/assets/images/3.jpg",
-      category: "Category 1",
-    },
-    {
-      id: 10,
-      name: "Deep Oil bath",
-      description:
-        "deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.",
-      price: "8,900",
-      image: "/assets/images/4.jpg",
-      category: "Category 1",
-    },
-  ];
+  // Load packages from API
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/packages", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load packages");
+        const json = await res.json();
+        console.log("/api/packages response:", json);
+        const list = Array.isArray(json?.packages)
+          ? json.packages
+          : Array.isArray(json)
+          ? json
+          : [];
+        const cats = Array.isArray(json?.categories) ? json.categories : [];
+        console.log("parsed packages list length:", list.length, "categories:", cats.length);
+        if (isMounted) {
+          setPackagesData(list);
+          setCategoriesData(cats);
+        }
+      } catch (e: unknown) {
+        if (isMounted) {
+          if (e instanceof Error) {
+            setError(e.message);
+          } else {
+            setError("An unknown error occurred");
+          }
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const categories = ["Category 1", "Category 2"];
+  const categories = ["All", ...categoriesData.map((c) => c.name)];
   const packagesPerPage = 10;
-  const totalPages = Math.ceil(packages.length / packagesPerPage);
-
-  const filteredPackages = packages.filter((pkg) => {
-    const matchesCategory =
-      activeCategory === "Category 1" ? true : pkg.category === activeCategory;
+  
+  // Filter packages based on category and search
+  const filteredPackages = packagesData.filter((pkg) => {
+    const matchesCategory = activeCategory === "All"
+      ? true
+      : pkg.category?.name === activeCategory;
     const matchesSearch =
       pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (pkg.description || "").toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+  
+  const totalPages = Math.ceil(filteredPackages.length / packagesPerPage) || 1;
+  
+  // Calculate category counts for display
+  const getCategoryCount = (categoryName: string) => {
+    if (categoryName === "All") return packagesData.length;
+    return packagesData.filter(pkg => pkg.category?.name === categoryName).length;
+  };
 
   const paginatedPackages = filteredPackages.slice(
     (currentPage - 1) * packagesPerPage,
@@ -311,14 +274,17 @@ const PackagesPage = () => {
               {categories.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => {
+                    setActiveCategory(category);
+                    setCurrentPage(1); // Reset to first page when changing category
+                  }}
                   className={`px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex-1 sm:flex-none ${
                     activeCategory === category
                       ? "bg-gradient-to-r from-warm-gold to-soft-yellow text-background"
                       : "bg-card text-foreground hover:bg-muted"
                   }`}
                 >
-                  {category}
+                  {category} {getCategoryCount(category) > 0 && `(${getCategoryCount(category)})`}
                 </button>
               ))}
             </div>
@@ -328,65 +294,93 @@ const PackagesPage = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search packages..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
                 className="pl-10 pr-4 py-2 bg-card border border-border/20 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent transition-all duration-200 w-full sm:w-64"
               />
             </div>
           </div>
 
           {/* Packages Grid */}
+          {!loading && !error && (
+            <div className="text-xs text-muted-foreground mb-2">
+              {activeCategory === "All" ? (
+                <>Found {packagesData.length} packages</>
+              ) : (
+                <>
+                  {activeCategory} · {filteredPackages.length} items
+                </>
+              )}
+            </div>
+          )}
           <div
             ref={gridRef}
             className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-16"
           >
-            {paginatedPackages.map((pkg, index) => (
-              <div
-                key={pkg.id}
-                ref={(el) => {
-                  packageRefs.current[index] = el;
-                }}
-                className="bg-card/80 backdrop-blur-sm border border-border/20 rounded-2xl overflow-hidden hover:border-border/40 hover:bg-card/90 transition-all duration-300 group shadow-lg"
-              >
-                <div className="flex flex-col sm:flex-row h-auto sm:h-48">
-                  {/* Image */}
-                  <div className="w-full sm:w-2/5 h-48 sm:h-full relative flex-shrink-0">
-                    <Image
-                      src={pkg.image}
-                      alt={pkg.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-medium text-foreground mb-2 sm:mb-3 leading-tight">
-                        {pkg.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
-                        {pkg.description}
-                      </p>
+            {loading && (
+              <div className="text-center py-10 text-muted-foreground">Loading packages...</div>
+            )}
+            {!loading && error && (
+              <div className="text-center py-10 text-destructive">{error}</div>
+            )}
+            {!loading && !error && paginatedPackages.length === 0 && (
+              <div className="text-center py-10 text-muted-foreground">No packages found.</div>
+            )}
+            {!loading && !error && paginatedPackages.length > 0 &&
+              paginatedPackages.map((pkg, index) => (
+                <div
+                  key={pkg.id}
+                  ref={(el) => {
+                    packageRefs.current[index] = el;
+                  }}
+                  className="bg-card/80 backdrop-blur-sm border border-border/20 rounded-2xl overflow-hidden hover:border-border/40 hover:bg-card/90 transition-all duration-300 group shadow-lg"
+                >
+                  <div className="flex flex-col sm:flex-row h-auto sm:h-48">
+                    {/* Image */}
+                    <div className="w-full sm:w-2/5 h-48 sm:h-full relative flex-shrink-0">
+                      <Image
+                        src={pkg.image || "/assets/images/1.jpg"}
+                        alt={pkg.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     </div>
 
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className="text-lg sm:text-xl font-medium text-warm-gold">
-                        {CURRENCY.symbol} {pkg.price}
-                      </span>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="px-4 sm:px-6"
-                      >
-                        Book now
-                      </Button>
+                    {/* Content */}
+                    <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-medium text-foreground mb-2 sm:mb-3 leading-tight">
+                          {pkg.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
+                          {pkg.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className="text-lg sm:text-xl font-medium text-warm-gold">
+                          {CURRENCY.symbol} {Number(pkg.price).toLocaleString("en-IN")}
+                        </span>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="px-4 sm:px-6"
+                          onClick={() => {
+                            setSelectedPackageId(pkg.id);
+                            setShowBooking(true);
+                          }}
+                        >
+                          Book now
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
 
           {/* Pagination */}
@@ -408,6 +402,15 @@ const PackagesPage = () => {
               </button>
             ))}
           </div>
+
+          {/* Booking Modal */}
+          {showBooking && selectedPackageId != null && (
+            <BookingModal
+              packageId={selectedPackageId}
+              open={showBooking}
+              onClose={() => setShowBooking(false)}
+            />
+          )}
         </div>
       </section>
     </div>

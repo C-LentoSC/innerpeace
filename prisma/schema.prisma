@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
  
@@ -28,8 +28,16 @@ model User {
   role          Role            @default(USER)
   accounts      Account[]
   sessions      Session[]
+  
+  // Booking relationships
+  customerBookings Booking[] @relation("CustomerBookings")
+  therapistBookings Booking[] @relation("TherapistBookings")
+  
   // Optional for WebAuthn support
   Authenticator Authenticator[]
+ 
+  // Reviews authored by the user (customer)
+  reviews      Review[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -41,12 +49,12 @@ model Account {
   type                     String
   provider                 String
   providerAccountId        String
-  refresh_token            String? @db.Text
-  access_token             String? @db.Text
+  refresh_token            String?
+  access_token             String?
   expires_at               Int?
   token_type               String?
   scope                    String?
-  id_token                 String? @db.Text
+  id_token                 String?
   session_state            String?
   refresh_token_expires_in Int?
   user                     User?   @relation(fields: [userId], references: [id])
@@ -98,13 +106,124 @@ model Authenticator {
 model Category {
   id          String   @id @default(cuid())
   name        String   @unique
-  description String?  @db.Text
+  description String?
   slug        String   @unique
   color       String?  // Hex color for UI
   icon        String?  // Icon name for UI
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   
+  services    Service[]
+  packages    Package[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  duration    Int      // minutes
+  price       Decimal
+  categoryId  String
+  image       String?  // service image URL
+  isActive    Boolean  @default(true)
+  
+  category Category  @relation(fields: [categoryId], references: [id])
+  bookings Booking[]
+  reviews  Review[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  customerId  String
+  therapistId String?
+  serviceId   String?
+  packageId   String?
+  date        DateTime
+  time        String
+  duration    Int      // minutes
+  price       Decimal
+  status      String   @default("pending")
+  notes       String?
+  // Per-booking contact snapshot (do NOT mutate global user on checkout)
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  
+  customer  User     @relation("CustomerBookings", fields: [customerId], references: [id])
+  therapist User?    @relation("TherapistBookings", fields: [therapistId], references: [id])
+  service   Service? @relation(fields: [serviceId], references: [id])
+  package   Package? @relation(fields: [packageId], references: [id])
+
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([customerId])
+  @@index([therapistId])
+  @@index([serviceId])
+  @@index([packageId])
+  @@index([date, time])
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  duration    Int      // total minutes
+  price       Decimal
+  originalPrice Decimal?
+  isActive    Boolean  @default(true)
+  popularity  String?  // "Most Popular", "Premium", etc.
+  image       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  // Optional link to Category for grouping/filtering in Packages page
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  
+  bookings    Booking[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Gallery {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   // "Services", "Facilities", "Team", "Products", "Events"
+  url         String   // Image URL
+  alt         String?
+  size        String?  // File size like "2.4 MB"
+  dimensions  String?  // "1920x1080"
+  status      String   @default("active") // "active", "inactive"
+  sortOrder   Int      @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  serviceId String?
+  rating    Int      // 1-5
+  title     String?
+  comment   String
+  status    String   @default("approved") // approved, pending, rejected
+
+  user      User     @relation(fields: [userId], references: [id])
+  service   Service? @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([serviceId])
 }

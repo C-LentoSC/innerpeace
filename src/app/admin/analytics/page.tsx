@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -6,74 +9,24 @@ import {
   DollarSign,
   Star,
   Activity,
+  BarChart3,
+  PieChart,
 } from "lucide-react";
 
-// Mock data - in real app, this would come from your database
-const analytics = {
-  revenue: {
-    current: "₹1,45,230",
-    previous: "₹1,32,150",
-    change: "+9.9%",
-    trend: "up" as const,
-  },
-  bookings: {
-    current: "247",
-    previous: "223",
-    change: "+10.8%",
-    trend: "up" as const,
-  },
-  customers: {
-    current: "89",
-    previous: "95",
-    change: "-6.3%",
-    trend: "down" as const,
-  },
-  avgRating: {
-    current: "4.8",
-    previous: "4.6",
-    change: "+0.2",
-    trend: "up" as const,
-  },
-};
-
-const topServices = [
-  { name: "Swedish Massage", bookings: 45, revenue: "₹67,500" },
-  { name: "Deep Tissue Massage", bookings: 38, revenue: "₹57,000" },
-  { name: "Hot Stone Therapy", bookings: 32, revenue: "₹64,000" },
-  { name: "Aromatherapy", bookings: 28, revenue: "₹42,000" },
-  { name: "Reflexology", bookings: 24, revenue: "₹36,000" },
-];
-
-const recentActivity = [
-  {
-    id: 1,
-    type: "booking",
-    message: "New booking from Sarah Johnson",
-    time: "2 minutes ago",
-    icon: Calendar,
-  },
-  {
-    id: 2,
-    type: "payment",
-    message: "Payment received - ₹3,500",
-    time: "15 minutes ago",
-    icon: DollarSign,
-  },
-  {
-    id: 3,
-    type: "review",
-    message: "New 5-star review from Mike Chen",
-    time: "1 hour ago",
-    icon: Star,
-  },
-  {
-    id: 4,
-    type: "customer",
-    message: "New customer registration - Emily Davis",
-    time: "2 hours ago",
-    icon: Users,
-  },
-];
+interface Analytics {
+  revenue: { current: number };
+  bookings: { current: number };
+  customers: { current: number };
+  avgRating: { current: number };
+  topServices: { name: string; bookings: number; revenue: number }[];
+  recentActivity: {
+    id: string;
+    type: string;
+    action: string;
+    timestamp: string;
+    status: string;
+  }[];
+}
 
 const monthlyData = [
   { month: "Jan", revenue: 85000, bookings: 145 },
@@ -86,176 +39,169 @@ const monthlyData = [
 ];
 
 export default function AnalyticsPage() {
+  const [data, setData] = useState<Analytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/analytics", { cache: "no-store" });
+        if (!res.ok) throw new Error("Analytics API error");
+        const json = await res.json();
+        // Basic shape validation
+        const safe: Analytics = {
+          revenue: { current: json?.revenue?.current ?? 0 },
+          bookings: { current: json?.bookings?.current ?? 0 },
+          customers: { current: json?.customers?.current ?? 0 },
+          avgRating: { current: json?.avgRating?.current ?? 0 },
+          topServices: Array.isArray(json?.topServices) ? json.topServices : [],
+          recentActivity: Array.isArray(json?.recentActivity)
+            ? json.recentActivity
+            : [],
+        };
+        if (active) setData(safe);
+      } catch {
+        if (active) setError("Failed to load analytics");
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (loading) return <div className="p-6 text-center">Loading analytics...</div>;
+  if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
+  if (!data) return null;
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-3xl font-bold gradient-text1">Analytics</h1>
-        <p className="mt-2 text-muted-foreground">
-          Track your business performance and insights
-        </p>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold gradient-text1">
+            Analytics Dashboard
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Real-time insights into your wellness business
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          Live data
+        </div>
       </div>
 
-      {/* Key metrics */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Monthly Revenue
+              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                ₹{(data?.revenue?.current ?? 0).toLocaleString()}
               </p>
-              <p className="text-3xl font-bold text-foreground mt-2">
-                {analytics.revenue.current}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Lifetime earnings</p>
             </div>
             <div className="bg-primary/20 p-3 rounded-full">
               <DollarSign className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            {analytics.revenue.trend === "up" ? (
-              <TrendingUp className="h-4 w-4 text-success mr-1" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-destructive mr-1" />
-            )}
-            <span
-              className={`text-sm font-medium ${
-                analytics.revenue.trend === "up"
-                  ? "text-success"
-                  : "text-destructive"
-              }`}
-            >
-              {analytics.revenue.change}
-            </span>
-            <span className="text-sm text-muted-foreground ml-1">
-              from last month
-            </span>
-          </div>
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Bookings
+              <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {data?.bookings?.current ?? 0}
               </p>
-              <p className="text-3xl font-bold text-foreground mt-2">
-                {analytics.bookings.current}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">All time bookings</p>
             </div>
             <div className="bg-primary/20 p-3 rounded-full">
               <Calendar className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            <TrendingUp className="h-4 w-4 text-success mr-1" />
-            <span className="text-sm font-medium text-success">
-              {analytics.bookings.change}
-            </span>
-            <span className="text-sm text-muted-foreground ml-1">
-              from last month
-            </span>
-          </div>
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                New Customers
+              <p className="text-sm font-medium text-muted-foreground">Unique Customers</p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {data?.customers?.current ?? 0}
               </p>
-              <p className="text-3xl font-bold text-foreground mt-2">
-                {analytics.customers.current}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Happy clients</p>
             </div>
             <div className="bg-primary/20 p-3 rounded-full">
               <Users className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            <TrendingDown className="h-4 w-4 text-destructive mr-1" />
-            <span className="text-sm font-medium text-destructive">
-              {analytics.customers.change}
-            </span>
-            <span className="text-sm text-muted-foreground ml-1">
-              from last month
-            </span>
-          </div>
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Average Rating
+              <p className="text-sm font-medium text-muted-foreground">Average Rating</p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {(data?.avgRating?.current ?? 0).toFixed(1)}
               </p>
-              <p className="text-3xl font-bold text-foreground mt-2">
-                {analytics.avgRating.current}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Customer satisfaction</p>
             </div>
             <div className="bg-primary/20 p-3 rounded-full">
               <Star className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            <TrendingUp className="h-4 w-4 text-success mr-1" />
-            <span className="text-sm font-medium text-success">
-              {analytics.avgRating.change}
-            </span>
-            <span className="text-sm text-muted-foreground ml-1">
-              from last month
-            </span>
-          </div>
         </div>
       </div>
 
-      {/* Charts and data */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue chart placeholder */}
-        <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-6">
-            Revenue Trend
-          </h2>
-          <div className="h-64 flex items-center justify-center bg-muted/20 rounded-lg">
-            <div className="text-center">
-              <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">
-                Chart visualization would go here
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Integration with charting library needed
-              </p>
-            </div>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Services */}
+        <div className="lg:col-span-2 bg-card rounded-lg border border-border p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-foreground">Top Services</h2>
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
           </div>
-        </div>
-
-        {/* Top services */}
-        <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-6">
-            Top Services This Month
-          </h2>
           <div className="space-y-4">
-            {topServices.map((service, index) => (
-              <div
-                key={service.name}
-                className="flex items-center justify-between"
-              >
-                <div className="flex items-center">
-                  <div className="bg-primary/20 text-primary rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium mr-3">
+            {(data?.topServices ?? []).map((service, index) => (
+              <div key={service.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-primary/10 text-primary">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">
-                      {service.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {service.bookings} bookings
-                    </p>
+                    <p className="font-medium text-foreground">{service.name}</p>
+                    <p className="text-sm text-muted-foreground">{service.bookings} bookings</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-foreground">
-                    {service.revenue}
+                  <p className="font-semibold text-foreground">₹{service.revenue.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Revenue</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-card rounded-lg border border-border p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+            <Activity className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="space-y-3">
+            {(data?.recentActivity ?? []).slice(0, 6).map((activity) => (
+              <div key={activity.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 bg-primary"></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {activity.action}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(activity.timestamp).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -264,30 +210,21 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Monthly performance table */}
+      {/* Performance Overview */}
       <div className="bg-card rounded-lg border border-border p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-6">
-          Monthly Performance
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-foreground">Monthly Performance Overview</h2>
+          <PieChart className="h-5 w-5 text-muted-foreground" />
+        </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full">
+          <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                  Month
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                  Revenue
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                  Bookings
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                  Avg per Booking
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                  Growth
-                </th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Month</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Revenue</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Bookings</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Avg/Booking</th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Growth</th>
               </tr>
             </thead>
             <tbody>
@@ -295,34 +232,19 @@ export default function AnalyticsPage() {
                 const avgPerBooking = Math.round(data.revenue / data.bookings);
                 const prevData = monthlyData[index - 1];
                 const growth = prevData
-                  ? (
-                      ((data.revenue - prevData.revenue) / prevData.revenue) *
-                      100
-                    ).toFixed(1)
+                  ? (((data.revenue - prevData.revenue) / prevData.revenue) * 100).toFixed(1)
                   : "0";
 
                 return (
-                  <tr key={data.month} className="border-b border-border/50">
-                    <td className="py-3 px-4 font-medium text-foreground">
-                      {data.month} 2025
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      ₹{data.revenue.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      {data.bookings}
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      ₹{avgPerBooking.toLocaleString()}
-                    </td>
+                  <tr key={data.month} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
+                    <td className="py-3 px-4 font-medium text-foreground">{data.month} 2025</td>
+                    <td className="py-3 px-4 text-foreground font-semibold">₹{data.revenue.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{data.bookings}</td>
+                    <td className="py-3 px-4 text-muted-foreground">₹{avgPerBooking.toLocaleString()}</td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center text-sm font-medium ${
-                          parseFloat(growth) >= 0
-                            ? "text-success"
-                            : "text-destructive"
-                        }`}
-                      >
+                      <span className={`inline-flex items-center text-sm font-medium ${
+                        parseFloat(growth) >= 0 ? "text-success" : "text-destructive"
+                      }`}>
                         {parseFloat(growth) >= 0 ? (
                           <TrendingUp className="h-3 w-3 mr-1" />
                         ) : (
@@ -336,28 +258,6 @@ export default function AnalyticsPage() {
               })}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Recent activity */}
-      <div className="bg-card rounded-lg border border-border p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-6">
-          Recent Activity
-        </h2>
-        <div className="space-y-4">
-          {recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center space-x-4">
-              <div className="bg-primary/20 p-2 rounded-full">
-                <activity.icon className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  {activity.message}
-                </p>
-                <p className="text-xs text-muted-foreground">{activity.time}</p>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
