@@ -26,7 +26,7 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${playfairDisplay.variable} ${geistMono.variable} antialiased`}
       >
