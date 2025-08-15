@@ -24,7 +24,6 @@ interface ServiceCategory {
 }
 
 type ServiceCategoryType = 'head-spa' | 'beauty';
-type AlignmentType = 'left' | 'right';
 
 // Constants
 const ANIMATION_CONFIG = {
@@ -138,16 +137,12 @@ const getTabClasses = (isActive: boolean): string => {
 // ServiceCard Component - Matching Figma Structure
 interface ServiceCardProps {
   service: Service;
-  alignment: AlignmentType;
-  cardRef: React.RefObject<HTMLDivElement>;
   onBook: (serviceId: string) => void;
   onContact: (serviceId: string) => void;
 }
 
 const ServiceCard = ({ 
   service, 
-  alignment, 
-  cardRef,
   onBook,
   onContact
 }: ServiceCardProps) => {
@@ -161,7 +156,6 @@ const ServiceCard = ({
 
   return (
     <article 
-      ref={cardRef}
       className="w-full max-w-[883px] h-auto lg:h-[505px] relative mx-auto overflow-hidden"
     >
       {/* Mobile Layout */}
@@ -480,8 +474,6 @@ const PackagesSection = () => {
                 >
                   <ServiceCard
                     service={service}
-                    alignment={index % 2 === 0 ? 'left' : 'right'}
-                    cardRef={{ current: null }}
                     onBook={handleServiceBook}
                     onContact={handleServiceContact}
                   />
