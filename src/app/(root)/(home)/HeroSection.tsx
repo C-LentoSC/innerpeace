@@ -82,12 +82,43 @@ const HeroSection = () => {
 
   return (
     <section ref={heroRef} className="min-h-screen flex items-center justify-center pt-16 lg:pt-20 pb-8 relative overflow-hidden">
-      {/* Subtle background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-amber-200/20 rounded-full animate-pulse" />
-        <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-amber-300/30 rounded-full animate-pulse" style={{animationDelay: '1s'}} />
-        <div className="absolute bottom-1/3 left-1/5 w-1.5 h-1.5 bg-amber-200/15 rounded-full animate-pulse" style={{animationDelay: '2s'}} />
-        <div className="absolute bottom-1/4 right-1/4 w-1 h-1 bg-amber-400/25 rounded-full animate-pulse" style={{animationDelay: '0.5s'}} />
+      {/* Enhanced background particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Large floating particles */}
+        <div className="absolute top-1/4 left-1/4 w-3 h-3 bg-amber-200/25 rounded-full animate-pulse" />
+        <div className="absolute top-1/3 right-1/3 w-2 h-2 bg-amber-300/30 rounded-full animate-pulse" style={{animationDelay: '1s'}} />
+        <div className="absolute bottom-1/3 left-1/5 w-2.5 h-2.5 bg-amber-200/20 rounded-full animate-pulse" style={{animationDelay: '2s'}} />
+        <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-amber-400/30 rounded-full animate-pulse" style={{animationDelay: '0.5s'}} />
+        
+        {/* Medium particles */}
+        <div className="absolute top-1/6 left-1/2 w-1.5 h-1.5 bg-amber-100/20 rounded-full animate-pulse" style={{animationDelay: '1.5s'}} />
+        <div className="absolute top-2/3 right-1/6 w-1.5 h-1.5 bg-amber-300/25 rounded-full animate-pulse" style={{animationDelay: '3s'}} />
+        <div className="absolute bottom-1/6 left-1/3 w-1.5 h-1.5 bg-amber-200/30 rounded-full animate-pulse" style={{animationDelay: '2.5s'}} />
+        <div className="absolute top-1/2 right-1/5 w-1.5 h-1.5 bg-amber-400/20 rounded-full animate-pulse" style={{animationDelay: '4s'}} />
+        
+        {/* Small particles */}
+        <div className="absolute top-1/5 left-3/4 w-1 h-1 bg-amber-200/15 rounded-full animate-pulse" style={{animationDelay: '0.8s'}} />
+        <div className="absolute top-3/4 left-1/6 w-1 h-1 bg-amber-300/20 rounded-full animate-pulse" style={{animationDelay: '1.2s'}} />
+        <div className="absolute bottom-1/5 right-2/3 w-1 h-1 bg-amber-100/25 rounded-full animate-pulse" style={{animationDelay: '3.5s'}} />
+        <div className="absolute top-1/8 right-1/2 w-1 h-1 bg-amber-400/15 rounded-full animate-pulse" style={{animationDelay: '2.8s'}} />
+        <div className="absolute bottom-1/8 left-2/3 w-1 h-1 bg-amber-200/20 rounded-full animate-pulse" style={{animationDelay: '4.2s'}} />
+        
+        {/* Micro particles */}
+        <div className="absolute top-1/7 left-1/8 w-0.5 h-0.5 bg-amber-300/30 rounded-full animate-pulse" style={{animationDelay: '0.3s'}} />
+        <div className="absolute top-5/6 right-1/8 w-0.5 h-0.5 bg-amber-200/25 rounded-full animate-pulse" style={{animationDelay: '1.8s'}} />
+        <div className="absolute bottom-1/7 right-3/4 w-0.5 h-0.5 bg-amber-400/20 rounded-full animate-pulse" style={{animationDelay: '3.2s'}} />
+        <div className="absolute top-2/5 left-1/12 w-0.5 h-0.5 bg-amber-100/30 rounded-full animate-pulse" style={{animationDelay: '2.2s'}} />
+        <div className="absolute bottom-2/5 right-1/12 w-0.5 h-0.5 bg-amber-300/15 rounded-full animate-pulse" style={{animationDelay: '4.5s'}} />
+        
+        {/* Floating gradient orbs */}
+        <div className="absolute top-1/3 left-1/6 w-8 h-8 bg-gradient-to-br from-amber-200/10 to-amber-400/5 rounded-full blur-sm animate-pulse" style={{animationDelay: '1.5s'}} />
+        <div className="absolute bottom-1/3 right-1/8 w-6 h-6 bg-gradient-to-br from-amber-300/8 to-amber-100/12 rounded-full blur-sm animate-pulse" style={{animationDelay: '3.8s'}} />
+        <div className="absolute top-1/2 left-3/4 w-4 h-4 bg-gradient-to-br from-amber-400/6 to-amber-200/10 rounded-full blur-sm animate-pulse" style={{animationDelay: '0.7s'}} />
+        
+        {/* Subtle light rays */}
+        <div className="absolute top-0 left-1/4 w-px h-32 bg-gradient-to-b from-amber-200/20 to-transparent opacity-50" />
+        <div className="absolute top-0 right-1/3 w-px h-24 bg-gradient-to-b from-amber-300/15 to-transparent opacity-40" />
+        <div className="absolute bottom-0 left-1/2 w-px h-28 bg-gradient-to-t from-amber-400/10 to-transparent opacity-30" />
       </div>
 
       <div className="my-container w-full relative z-10">
