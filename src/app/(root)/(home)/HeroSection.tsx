@@ -163,10 +163,10 @@ const HeroSection = () => {
           <div ref={buttonRef} className="flex items-center justify-center w-full">
             <div className="relative group">
               {/* Button glow effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-200 to-amber-400 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-200 to-amber-400 rounded-md blur opacity-30 group-hover:opacity-50 transition duration-300" />
               <Button 
                 variant="default" 
-                className="relative text-sm sm:text-base lg:text-lg px-8 sm:px-10 lg:px-12 py-4 sm:py-5 lg:py-6 font-medium font-playfair-display bg-gradient-to-r from-amber-200 to-amber-400 hover:from-amber-100 hover:to-amber-300 text-zinc-900 rounded-full shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 transform hover:scale-105 transition-all duration-300 border-0"
+                className="relative text-sm sm:text-base lg:text-lg px-8 sm:px-10 lg:px-12 py-4 sm:py-5 lg:py-6 font-medium font-playfair-display bg-gradient-to-r from-amber-200 to-amber-400 hover:from-amber-100 hover:to-amber-300 text-zinc-900 rounded-md shadow-xl shadow-amber-500/25 hover:shadow-2xl hover:shadow-amber-500/40 transform hover:scale-105 transition-all duration-300 border-0"
               >
                 Book Your Appointment Now
               </Button>
