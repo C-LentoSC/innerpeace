@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Facebook, Instagram, MessageCircle } from "lucide-react";
 import { FOOTER_DATA } from "@/constants/data";
 
 const Footer = () => {
@@ -91,28 +92,54 @@ const Footer = () => {
               <h4 className="text-xl font-medium text-foreground">
                 {FOOTER_DATA.sections.socials.title}
               </h4>
-              <ul className="space-y-3">
-                {FOOTER_DATA.sections.socials.links.map((link, index) => (
-                  <li key={index}>
-                    {link.external ? (
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                      >
-                        {link.label}
-                      </a>
-                    ) : (
-                      <Link
-                        href={link.href}
-                        className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                      >
-                        {link.label}
-                      </Link>
-                    )}
-                  </li>
-                ))}
+              <ul className="space-y-4">
+                {FOOTER_DATA.sections.socials.links.map((link, index) => {
+                  // Get the appropriate icon for each social platform
+                  const getIcon = (label: string) => {
+                    switch (label.toLowerCase()) {
+                      case 'facebook':
+                        return <Facebook size={20} />;
+                      case 'instagram':
+                        return <Instagram size={20} />;
+                      case 'whatsapp':
+                        return <MessageCircle size={20} />;
+                      default:
+                        return null;
+                    }
+                  };
+
+                  return (
+                    <li key={index}>
+                      {link.external ? (
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-muted-foreground hover:text-warm-gold transition-all duration-200 group"
+                        >
+                          <span className="p-2 rounded-full bg-warm-gold/10 group-hover:bg-warm-gold/20 transition-colors duration-200">
+                            {getIcon(link.label)}
+                          </span>
+                          <span className="group-hover:translate-x-1 transition-transform duration-200">
+                            {link.label}
+                          </span>
+                        </a>
+                      ) : (
+                        <Link
+                          href={link.href}
+                          className="flex items-center gap-3 text-muted-foreground hover:text-warm-gold transition-all duration-200 group"
+                        >
+                          <span className="p-2 rounded-full bg-warm-gold/10 group-hover:bg-warm-gold/20 transition-colors duration-200">
+                            {getIcon(link.label)}
+                          </span>
+                          <span className="group-hover:translate-x-1 transition-transform duration-200">
+                            {link.label}
+                          </span>
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>
