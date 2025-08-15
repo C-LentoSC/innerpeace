@@ -190,7 +190,7 @@ const GallerySection = () => {
                 </div>
               </div>
               {/* Bottom Image */}
-              <div className="relative h-[250px] overflow-hidden rounded-xl">
+              <div className="relative h-[320px] overflow-hidden rounded-xl">
                 <Image
                   src="/assets/images/4.jpg"
                   alt="Hot stone therapy treatment"
