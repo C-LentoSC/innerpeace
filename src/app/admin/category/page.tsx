@@ -204,24 +204,7 @@ export default function CategoryPage() {
     setShowEditModal(true);
   };
 
-  const toggleStatus = async (id: string) => {
-    const category = categories.find((cat) => cat.id === id);
-    if (!category) return;
-
-    try {
-      const categoryData: UpdateCategoryData = {
-        name: category.name,
-        isActive: !category.isActive,
-      };
-
-      await updateCategory(id, categoryData);
-      await loadCategories(); // Refresh the list
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update category status"
-      );
-    }
-  };
+  
 
   return (
     <div className="space-y-6">

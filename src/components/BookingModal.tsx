@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Calendar, Clock, CheckCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/Button";
@@ -12,8 +12,6 @@ interface BookingModalProps {
   open: boolean;
   onClose: () => void;
 }
-
-type Pkg = { id: string; duration?: number; durationInMinutes?: number };
 
 export default function BookingModal({ packageId, open, onClose }: BookingModalProps) {
   const router = useRouter();

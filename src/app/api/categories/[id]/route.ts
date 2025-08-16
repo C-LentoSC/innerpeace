@@ -11,8 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Temporary cast until Prisma client regenerated
-    const category = await (prisma.category as any).findUnique({
+    const category = await prisma.category.findUnique({
       where: { id },
       include: { parent: true, children: true },
     });
@@ -37,7 +36,7 @@ export async function GET(
       parent: category.parent
         ? { id: category.parent.id, name: category.parent.name, slug: category.parent.slug }
         : null,
-      children: (category.children || []).map((ch: any) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
+      children: (category.children || []).map((ch) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     };
@@ -115,7 +114,7 @@ export async function PUT(
     }
 
     // Update category
-    const category = await (prisma.category as any).update({
+    const category = await prisma.category.update({
       where: { id },
       data: {
         name,
@@ -126,7 +125,7 @@ export async function PUT(
         isActive: isActive !== undefined ? isActive : true,
         ...(parentId !== undefined ? { parentId } : {}),
         ...(typeof sortOrderInput === 'number' ? { sortOrder: sortOrderInput } : {}),
-      } as any,
+      },
       include: { parent: true, children: true },
     });
     const payload = {
@@ -142,7 +141,7 @@ export async function PUT(
       parent: category.parent
         ? { id: category.parent.id, name: category.parent.name, slug: category.parent.slug }
         : null,
-      children: (category.children || []).map((ch: any) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
+      children: (category.children || []).map((ch) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     };

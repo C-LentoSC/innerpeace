@@ -13,6 +13,13 @@ interface Therapist {
   completedBookings?: number;
 }
 
+interface TherapistPayload {
+  name: string;
+  email: string;
+  mobileNumber?: string;
+  image?: string | null;
+}
+
 export default function TherapistsPage() {
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState<Therapist[]>([]);
@@ -35,8 +42,9 @@ export default function TherapistsPage() {
       if (!res.ok) throw new Error("Failed to load therapists");
       const data: Therapist[] = await res.json();
       setList(data);
-    } catch (e: any) {
-      setError(e?.message || "Failed to load therapists");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to load therapists";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -72,7 +80,7 @@ export default function TherapistsPage() {
     }
     try {
       setSaving(true);
-      const payload: any = {
+      const payload: TherapistPayload = {
         name,
         email,
         mobileNumber: mobile || undefined,
@@ -98,8 +106,9 @@ export default function TherapistsPage() {
       }
       setShowForm(false);
       await load();
-    } catch (e: any) {
-      setError(e?.message || "Failed to save therapist");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to save therapist";
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -114,8 +123,9 @@ export default function TherapistsPage() {
         throw new Error(j?.error || "Failed to delete");
       }
       await load();
-    } catch (e: any) {
-      setError(e?.message || "Failed to delete therapist");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to delete therapist";
+      setError(message);
     }
   }
 

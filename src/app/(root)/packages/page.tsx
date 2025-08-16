@@ -209,7 +209,7 @@ const PackagesPage = () => {
         const subs: UICategory[] = await res.json();
         setSubcategories(subs);
         setSelectedSubcategory('all');
-      } catch (_) {
+      } catch {
         if (!controller.signal.aborted) setSubcategories([]);
       }
     }
@@ -231,10 +231,7 @@ const PackagesPage = () => {
   
   const totalPages = Math.ceil(filteredPackages.length / packagesPerPage) || 1;
   
-  // Calculate category counts for display
-  const getCategoryCount = (categorySlug: string) => {
-    return packagesData.filter(pkg => pkg.category?.parent?.slug === categorySlug).length;
-  };
+  
 
   const paginatedPackages = filteredPackages.slice(
     (currentPage - 1) * packagesPerPage,

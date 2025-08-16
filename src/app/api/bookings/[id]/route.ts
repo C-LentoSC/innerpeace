@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 
 const prisma = new PrismaClient();
@@ -84,11 +84,25 @@ export async function PUT(
     };
 
     // Build update data, ignoring empty strings and undefined values
-    const updateData: any = {};
-    if (typeof customerId === 'string' && customerId) updateData.customerId = customerId;
-    if (therapistId !== undefined) updateData.therapistId = therapistId ? String(therapistId) : null;
-    if (serviceId !== undefined) updateData.serviceId = serviceId ? String(serviceId) : null;
-    if (packageId !== undefined) updateData.packageId = packageId ? String(packageId) : null;
+    const updateData: Prisma.BookingUpdateInput = {};
+    if (typeof customerId === 'string' && customerId) {
+      updateData.customer = { connect: { id: customerId } };
+    }
+    if (therapistId !== undefined) {
+      updateData.therapist = therapistId
+        ? { connect: { id: String(therapistId) } }
+        : { disconnect: true };
+    }
+    if (serviceId !== undefined) {
+      updateData.service = serviceId
+        ? { connect: { id: String(serviceId) } }
+        : { disconnect: true };
+    }
+    if (packageId !== undefined) {
+      updateData.package = packageId
+        ? { connect: { id: String(packageId) } }
+        : { disconnect: true };
+    }
     if (date) updateData.date = new Date(date);
     if (typeof time === 'string' && time) updateData.time = time;
     if (duration !== undefined && duration !== null && String(duration) !== '') updateData.duration = parseInt(String(duration));

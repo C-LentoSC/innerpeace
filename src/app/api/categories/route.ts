@@ -4,14 +4,30 @@ import { auth } from "@/auth";
 import { createCategorySchema } from "@/lib/validations";
 import { ZodError } from "zod";
 
+type CategoryRaw = {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  color: string | null;
+  icon: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  parentId?: string | null;
+  parent?: { id: string; name: string; slug: string } | null;
+  children?: Array<{ id: string; name: string; slug: string }>;
+  _count?: { services?: number };
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // GET - Fetch all categories
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q");
 
-    // Temporary cast until Prisma client is regenerated to include parent/children in types
-    const categories = (await (prisma.category as any).findMany({
+    const categories = (await prisma.category.findMany({
       where: q
         ? {
             OR: [
@@ -28,7 +44,7 @@ export async function GET(request: NextRequest) {
         children: true,
         _count: { select: { services: true } },
       },
-    })) as any[];
+    })) as unknown as CategoryRaw[];
 
     const payload = categories.map((c) => ({
       id: c.id,
@@ -39,12 +55,12 @@ export async function GET(request: NextRequest) {
       icon: c.icon,
       isActive: c.isActive,
       sortOrder: c.sortOrder,
-      parentId: (c as any).parentId ?? null,
-      parent: (c as any).parent
-        ? { id: c.parent.id, name: c.parent.name, slug: c.parent.slug }
-        : null,
-      children: ((c as any).children || []).map((ch: any) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
-      servicesCount: (c as any)._count?.services ?? 0,
+      parentId: c.parentId ?? null,
+      parent: c.parent ? { id: c.parent.id, name: c.parent.name, slug: c.parent.slug } : null,
+      children: Array.isArray(c.children)
+        ? c.children.map((ch) => ({ id: ch.id, name: ch.name, slug: ch.slug }))
+        : [],
+      servicesCount: c._count?.services ?? 0,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
     }));
@@ -111,7 +127,7 @@ export async function POST(request: NextRequest) {
     const finalSortOrder = typeof sortOrderInput === 'number' ? sortOrderInput : nextSortOrder;
 
     // Create category
-    const category = await (prisma.category as any).create({
+    const category = await prisma.category.create({
       data: {
         name: name,
         description: description || null,
@@ -121,7 +137,7 @@ export async function POST(request: NextRequest) {
         isActive: isActive !== undefined ? isActive : true,
         sortOrder: finalSortOrder,
         parentId: parentId,
-      } as any,
+      },
     });
 
     return NextResponse.json(category, { status: 201 });

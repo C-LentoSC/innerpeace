@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       const absoluteOld = path.join(process.cwd(), "public", oldPath.replace(/^\//, ""));
       try {
         await fs.unlink(absoluteOld);
-      } catch (_) {
+      } catch {
         // ignore if file doesn't exist
       }
     }

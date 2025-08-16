@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -53,7 +53,7 @@ export async function PUT(
         // New fields; safe cast until Prisma client is regenerated
         status: typeof status === 'string' && status.trim() ? status.trim() : undefined,
         categoryId: categoryId ?? undefined,
-      } as any,
+      } as Prisma.PackageUpdateInput,
     });
 
     return NextResponse.json(packageData);

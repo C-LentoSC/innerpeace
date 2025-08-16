@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     // We include category and its parent to support Option A hierarchy
-    const where: any = {};
+    const where: Prisma.PackageWhereInput = {};
 
     // Search by name/description
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search } },
+        { description: { contains: search } },
       ];
     }
 
@@ -36,8 +36,7 @@ export async function GET(request: NextRequest) {
       prisma.package.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        // Cast to any until Prisma client reflects Category.parent relation
-        include: { category: { include: { parent: true } as any } } as any,
+        include: { category: { include: { parent: true } } },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -83,18 +82,28 @@ export async function GET(request: NextRequest) {
         description: pkg.description,
         duration: pkg.duration,
         price: Number(pkg.price),
-        // Cast while Prisma types are outdated
-        status: (pkg as any).status,
+        status: (pkg as unknown as { status?: string }).status ?? 'active',
         originalPrice: pkg.originalPrice ? Number(pkg.originalPrice) : null,
         isActive: pkg.isActive,
         popularity: pkg.popularity,
         image: pkg.image,
         startDate: pkg.startDate?.toISOString() || null,
         endDate: pkg.endDate?.toISOString() || null,
-        category: (pkg as any).category
-          ? { id: (pkg as any).category.id, name: (pkg as any).category.name, slug: (pkg as any).category.slug, parent: (pkg as any).category.parent ? { id: (pkg as any).category.parent.id, name: (pkg as any).category.parent.name, slug: (pkg as any).category.parent.slug } : null }
+        category: pkg.category
+          ? {
+              id: pkg.category.id,
+              name: pkg.category.name,
+              slug: pkg.category.slug,
+              parent: pkg.category.parent
+                ? {
+                    id: pkg.category.parent.id,
+                    name: pkg.category.parent.name,
+                    slug: pkg.category.parent.slug,
+                  }
+                : null,
+            }
           : null,
-        categoryId: (pkg as any).categoryId ?? null,
+        categoryId: pkg.categoryId ?? null,
         createdAt: pkg.createdAt.toISOString(),
         updatedAt: pkg.updatedAt.toISOString(),
       })),

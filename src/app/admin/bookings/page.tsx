@@ -186,7 +186,8 @@ export default function BookingsPage() {
       // Include all users as potential therapists so existing bookings prefill correctly
       setTherapists(usersData);
       // packages API returns { packages: [...] }
-      setPackages((packagesData?.packages || []).map((p: any) => ({ id: p.id, name: p.name, duration: p.duration, price: p.price })));
+      const rawPackages = (packagesData?.packages || []) as Array<{ id: string; name: string; duration: number; price: number }>;
+      setPackages(rawPackages.map((p) => ({ id: p.id, name: p.name, duration: p.duration, price: p.price })));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
