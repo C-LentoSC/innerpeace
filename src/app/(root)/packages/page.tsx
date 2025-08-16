@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/Button";
-import { Search } from "lucide-react";
+import { Search, Clock } from "lucide-react";
 import { CURRENCY } from "@/constants/data";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -19,17 +19,21 @@ const PackagesPage = () => {
   const paginationRef = useRef<HTMLDivElement>(null);
   const packageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const [activeCategory, setActiveCategory] = useState<string>("All");
+  // Use category slug for accuracy; only main categories (head-spa, beauty)
+  const [activeCategory, setActiveCategory] = useState<string>('head-spa');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showBooking, setShowBooking] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState<number | string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  type UIPackage = { id: string; name: string; description: string; price: number; image?: string | null; categoryId?: string | null; category?: { id: string; name: string; slug: string } | null };
+  type UIPackage = { id: string; name: string; description: string; price: number; duration?: number; isActive?: boolean; status?: string; image?: string | null; categoryId?: string | null; category?: { id: string; name: string; slug: string; parent?: { id: string; name: string; slug: string } | null } | null };
   type UICategory = { id: string; name: string; slug: string; color?: string | null; packagesCount?: number };
   const [packagesData, setPackagesData] = useState<UIPackage[]>([]);
   const [categoriesData, setCategoriesData] = useState<UICategory[]>([]);
+  // Subcategory list for the selected main category (fetched dynamically)
+  const [subcategories, setSubcategories] = useState<UICategory[]>([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -183,26 +187,53 @@ const PackagesPage = () => {
     };
   }, []);
 
-  const categories = ["All", ...categoriesData.map((c) => c.name)];
+  // Build tabs using category slugs; only show Head SPA and Beauty as requested
+  const orderedCategories = React.useMemo(() => {
+    const allowed = ['head-spa', 'beauty'];
+    return categoriesData.filter(c => allowed.includes(c.slug));
+  }, [categoriesData]);
+
+  const categoryTabs: { label: string; slug: string }[] = React.useMemo(
+    () => orderedCategories.map(c => ({ label: c.name, slug: c.slug })),
+    [orderedCategories]
+  );
   const packagesPerPage = 10;
   
-  // Filter packages based on category and search
+  // Fetch subcategories when a main category tab is active
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadSubs() {
+      try {
+        const res = await fetch(`/api/categories/${activeCategory}/subcategories`, { signal: controller.signal });
+        if (!res.ok) throw new Error('Failed to load subcategories');
+        const subs: UICategory[] = await res.json();
+        setSubcategories(subs);
+        setSelectedSubcategory('all');
+      } catch (_) {
+        if (!controller.signal.aborted) setSubcategories([]);
+      }
+    }
+    loadSubs();
+    return () => controller.abort();
+  }, [activeCategory]);
+
+  // Filter packages based on main category (by parent.slug) and optional subcategory, plus search
   const filteredPackages = packagesData.filter((pkg) => {
-    const matchesCategory = activeCategory === "All"
+    const matchesCategory = pkg.category?.parent?.slug === activeCategory;
+    const matchesSubcategory = selectedSubcategory === 'all'
       ? true
-      : pkg.category?.name === activeCategory;
+      : pkg.category?.slug === selectedSubcategory;
     const matchesSearch =
       pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (pkg.description || "").toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesSubcategory && matchesSearch;
   });
   
   const totalPages = Math.ceil(filteredPackages.length / packagesPerPage) || 1;
   
   // Calculate category counts for display
-  const getCategoryCount = (categoryName: string) => {
-    if (categoryName === "All") return packagesData.length;
-    return packagesData.filter(pkg => pkg.category?.name === categoryName).length;
+  const getCategoryCount = (categorySlug: string) => {
+    return packagesData.filter(pkg => pkg.category?.parent?.slug === categorySlug).length;
   };
 
   const paginatedPackages = filteredPackages.slice(
@@ -271,23 +302,50 @@ const PackagesPage = () => {
           >
             {/* Category Tabs */}
             <div className="flex space-x-2 w-full sm:w-auto justify-center sm:justify-start">
-              {categories.map((category) => (
+              {categoryTabs.map((tab) => (
                 <button
-                  key={category}
+                  key={tab.slug}
                   onClick={() => {
-                    setActiveCategory(category);
+                    setActiveCategory(tab.slug);
+                    setSelectedSubcategory('all');
                     setCurrentPage(1); // Reset to first page when changing category
                   }}
                   className={`px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex-1 sm:flex-none ${
-                    activeCategory === category
+                    activeCategory === tab.slug
                       ? "bg-gradient-to-r from-warm-gold to-soft-yellow text-background"
                       : "bg-card text-foreground hover:bg-muted"
                   }`}
                 >
-                  {category} {getCategoryCount(category) > 0 && `(${getCategoryCount(category)})`}
+                  {tab.label}
                 </button>
               ))}
             </div>
+
+            {/* Subcategory chips (dynamic) */}
+            {activeCategory && (
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-start">
+                <button
+                  key="all"
+                  onClick={() => { setSelectedSubcategory('all'); setCurrentPage(1); }}
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    selectedSubcategory === 'all' ? 'bg-gradient-to-r from-warm-gold to-soft-yellow text-background' : 'bg-card text-foreground hover:bg-muted'
+                  }`}
+                >
+                  All
+                </button>
+                {subcategories.map((sub) => (
+                  <button
+                    key={sub.slug}
+                    onClick={() => { setSelectedSubcategory(sub.slug); setCurrentPage(1); }}
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      selectedSubcategory === sub.slug ? 'bg-gradient-to-r from-warm-gold to-soft-yellow text-background' : 'bg-card text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {sub.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Search */}
             <div className="relative w-full sm:w-auto">
@@ -305,18 +363,7 @@ const PackagesPage = () => {
             </div>
           </div>
 
-          {/* Packages Grid */}
-          {!loading && !error && (
-            <div className="text-xs text-muted-foreground mb-2">
-              {activeCategory === "All" ? (
-                <>Found {packagesData.length} packages</>
-              ) : (
-                <>
-                  {activeCategory} · {filteredPackages.length} items
-                </>
-              )}
-            </div>
-          )}
+          {/* Packages Grid - header count removed per request */}
           <div
             ref={gridRef}
             className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-16"
@@ -339,9 +386,9 @@ const PackagesPage = () => {
                   }}
                   className="bg-card/80 backdrop-blur-sm border border-border/20 rounded-2xl overflow-hidden hover:border-border/40 hover:bg-card/90 transition-all duration-300 group shadow-lg"
                 >
-                  <div className="flex flex-col sm:flex-row h-auto sm:h-48">
+                  <div className="flex flex-col sm:flex-row h-auto items-stretch">
                     {/* Image */}
-                    <div className="w-full sm:w-2/5 h-48 sm:h-full relative flex-shrink-0">
+                    <div className="w-full sm:w-2/5 relative flex-shrink-0 min-h-[12rem]">
                       <Image
                         src={pkg.image || "/assets/images/1.jpg"}
                         alt={pkg.name}
@@ -351,7 +398,7 @@ const PackagesPage = () => {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
+                    <div className="flex-1 p-4 sm:p-6 pb-8 flex flex-col justify-between gap-2">
                       <div>
                         <h3 className="text-lg sm:text-xl font-medium text-foreground mb-2 sm:mb-3 leading-tight">
                           {pkg.name}
@@ -376,6 +423,26 @@ const PackagesPage = () => {
                         >
                           Book now
                         </Button>
+                      </div>
+                      {/* Duration row */}
+                      {typeof pkg.duration === 'number' && (
+                        <div className="mt-2 flex items-center text-xs text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5 mr-1" />
+                          {pkg.duration} min
+                        </div>
+                      )}
+                      {/* Badges row */}
+                      <div className="flex items-center gap-2 mt-3">
+                        {pkg.category?.name && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-800/60 text-amber-200">
+                            {pkg.category.name}
+                          </span>
+                        )}
+                        {pkg.status && pkg.status.toLowerCase() !== 'active' && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-200 text-black">
+                            {pkg.status}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

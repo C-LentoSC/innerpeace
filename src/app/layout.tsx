@@ -28,10 +28,11 @@ export default function Layout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${playfairDisplay.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <main>{children}</main>
+          <main suppressHydrationWarning>{children}</main>
         </AuthProvider>
       </body>
     </html>

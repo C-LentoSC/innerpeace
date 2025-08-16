@@ -31,7 +31,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { name, description, duration, price, originalPrice, isActive, popularity, image, startDate, endDate } = body;
+    const { name, description, duration, price, originalPrice, isActive, popularity, image, startDate, endDate, status, categoryId } = body;
 
     if (!name || !description || !duration || !price) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -50,7 +50,10 @@ export async function PUT(
         image: image || null,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
-      },
+        // New fields; safe cast until Prisma client is regenerated
+        status: typeof status === 'string' && status.trim() ? status.trim() : undefined,
+        categoryId: categoryId ?? undefined,
+      } as any,
     });
 
     return NextResponse.json(packageData);

@@ -11,10 +11,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const category = await prisma.category.findUnique({
-      where: {
-        id: id,
-      },
+    // Temporary cast until Prisma client regenerated
+    const category = await (prisma.category as any).findUnique({
+      where: { id },
+      include: { parent: true, children: true },
     });
 
     if (!category) {
@@ -24,7 +24,25 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(category);
+    const payload = {
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      slug: category.slug,
+      color: category.color,
+      icon: category.icon,
+      isActive: category.isActive,
+      sortOrder: category.sortOrder,
+      parentId: category.parentId ?? null,
+      parent: category.parent
+        ? { id: category.parent.id, name: category.parent.name, slug: category.parent.slug }
+        : null,
+      children: (category.children || []).map((ch: any) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+    };
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Error fetching category:", error);
     return NextResponse.json(
@@ -56,6 +74,8 @@ export async function PUT(
     // Validate input data
     const validatedData = await updateCategorySchema.parseAsync(body);
     const { name, description, color, icon, isActive } = validatedData;
+    const parentId: string | null = body.parentId ?? null;
+    const sortOrderInput: number | null = body.sortOrder ?? null;
 
     // Check if category exists
     const existingCategory = await prisma.category.findUnique({
@@ -95,19 +115,39 @@ export async function PUT(
     }
 
     // Update category
-    const category = await prisma.category.update({
-      where: { id: id },
+    const category = await (prisma.category as any).update({
+      where: { id },
       data: {
-        name: name,
+        name,
         description: description || null,
         slug,
         color: color || "#c9d1a0",
         icon: icon || "Sparkles",
         isActive: isActive !== undefined ? isActive : true,
-      },
+        ...(parentId !== undefined ? { parentId } : {}),
+        ...(typeof sortOrderInput === 'number' ? { sortOrder: sortOrderInput } : {}),
+      } as any,
+      include: { parent: true, children: true },
     });
+    const payload = {
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      slug: category.slug,
+      color: category.color,
+      icon: category.icon,
+      isActive: category.isActive,
+      sortOrder: category.sortOrder,
+      parentId: category.parentId ?? null,
+      parent: category.parent
+        ? { id: category.parent.id, name: category.parent.name, slug: category.parent.slug }
+        : null,
+      children: (category.children || []).map((ch: any) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+    };
 
-    return NextResponse.json(category);
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Error updating category:", error);
 

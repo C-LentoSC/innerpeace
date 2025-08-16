@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Plus, Search, Edit, Trash2, X, Calendar, Package, Clock, DollarSign } from "lucide-react";
+import { Plus, Search, Edit, Trash2, X, Package, Clock, DollarSign } from "lucide-react";
 import { Button } from "@/components/Button";
+import { fetchCategories, type Category as CategoryType } from "@/lib/api/categories";
 
 interface Package {
   id: string;
@@ -11,14 +12,13 @@ interface Package {
   description: string;
   duration: number;
   price: number;
-  originalPrice?: number;
   isActive: boolean;
-  popularity?: string;
   image?: string;
-  startDate?: string;
-  endDate?: string;
   createdAt: string;
   updatedAt: string;
+  status?: string;
+  categoryId?: string | null;
+  category?: { id: string; name: string; slug: string; parent?: { id: string; name: string; slug: string } | null } | null;
 }
 
 interface PackageFormData {
@@ -26,12 +26,10 @@ interface PackageFormData {
   description: string;
   duration: string;
   price: string;
-  originalPrice: string;
   isActive: boolean;
-  popularity: string;
   image: string;
-  startDate: string;
-  endDate: string;
+  status: string;
+  categoryId: string;
 }
 
 export default function PackagesPage() {
@@ -48,19 +46,22 @@ export default function PackagesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const mainCategories = categories.filter(c => !c.parentId);
+  const [selectedMainCategoryId, setSelectedMainCategoryId] = useState<string>("");
+  const subcategories = categories.filter(c => c.parentId === selectedMainCategoryId);
 
   const [formData, setFormData] = useState<PackageFormData>({
     name: '',
     description: '',
     duration: '60',
     price: '0',
-    originalPrice: '',
     isActive: true,
-    popularity: '',
     image: '',
-    startDate: '',
-    endDate: '',
+    status: 'active',
+    categoryId: '',
   });
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
 
   const fetchPackages = async () => {
     try {
@@ -80,8 +81,38 @@ export default function PackagesPage() {
     }
   };
 
+  const handleImageFileUpload = async (file: File) => {
+    try {
+      setUploadingImage(true);
+      const fd = new FormData();
+      fd.append('file', file);
+      if (formData.image) {
+        fd.append('oldPath', formData.image);
+      }
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      if (!res.ok) {
+        throw new Error('Upload failed');
+      }
+      const data = await res.json();
+      setFormData({ ...formData, image: data.url });
+    } catch (e) {
+      console.error(e);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   useEffect(() => {
     fetchPackages();
+    (async () => {
+      try {
+        const cats = await fetchCategories();
+        setCategories(cats);
+      } catch (e) {
+        console.error('Failed to load categories', e);
+      }
+    })();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,12 +130,10 @@ export default function PackagesPage() {
           description: formData.description,
           duration: parseInt(formData.duration),
           price: parseFloat(formData.price),
-          originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
           isActive: formData.isActive,
-          popularity: formData.popularity || null,
           image: formData.image,
-          startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
-          endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
+          status: formData.status,
+          categoryId: formData.categoryId || null,
         }),
       });
 
@@ -145,14 +174,13 @@ export default function PackagesPage() {
       description: '',
       duration: '60',
       price: '0',
-      originalPrice: '',
       isActive: true,
-      popularity: '',
       image: '',
-      startDate: '',
-      endDate: '',
+      status: 'active',
+      categoryId: '',
     });
     setEditingPackage(null);
+    setSelectedMainCategoryId("");
   };
 
   const openModal = (pkg?: Package) => {
@@ -162,14 +190,14 @@ export default function PackagesPage() {
         description: pkg.description,
         duration: pkg.duration.toString(),
         price: pkg.price.toString(),
-        originalPrice: pkg.originalPrice?.toString() || '',
         isActive: pkg.isActive,
-        popularity: pkg.popularity || '',
         image: pkg.image || '',
-        startDate: pkg.startDate ? new Date(pkg.startDate).toISOString().split('T')[0] : '',
-        endDate: pkg.endDate ? new Date(pkg.endDate).toISOString().split('T')[0] : '',
+        status: pkg.status || 'active',
+        categoryId: pkg.categoryId || '',
       });
       setEditingPackage(pkg);
+      const mainId = pkg.category?.parent?.id || "";
+      setSelectedMainCategoryId(mainId);
     } else {
       resetForm();
     }
@@ -213,22 +241,7 @@ export default function PackagesPage() {
       : "bg-muted/20 text-muted-foreground border-muted/20";
   };
 
-  const getPopularityColor = (popularity?: string) => {
-    switch (popularity) {
-      case "Most Popular":
-        return "bg-primary/20 text-primary";
-      case "Premium":
-        return "bg-warning/20 text-warning";
-      case "Luxury":
-        return "bg-purple-500/20 text-purple-400";
-      case "Budget Friendly":
-        return "bg-success/20 text-success";
-      case "Special":
-        return "bg-info/20 text-info";
-      default:
-        return "bg-muted/20 text-muted-foreground";
-    }
-  };
+  // removed popularity helper
 
   const totalPackages = stats.totalPackages;
   const activePackages = stats.activePackages;
@@ -346,15 +359,7 @@ export default function PackagesPage() {
                 </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute top-4 left-4">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPopularityColor(
-                    pkg.popularity
-                  )}`}
-                >
-                  {pkg.popularity || 'Standard'}
-                </span>
-              </div>
+              {/* popularity badge removed */}
               <div className="absolute top-4 right-4">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
@@ -389,18 +394,6 @@ export default function PackagesPage() {
                     <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 flex-shrink-0" />
                     {pkg.duration} minutes duration
                   </li>
-                  {pkg.startDate && (
-                    <li className="flex items-center">
-                      <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 flex-shrink-0" />
-                      Available from: {new Date(pkg.startDate).toLocaleDateString()}
-                    </li>
-                  )}
-                  {pkg.endDate && (
-                    <li className="flex items-center">
-                      <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 flex-shrink-0" />
-                      Until: {new Date(pkg.endDate).toLocaleDateString()}
-                    </li>
-                  )}
                 </ul>
               </div>
 
@@ -410,11 +403,6 @@ export default function PackagesPage() {
                     <span className="text-2xl font-bold text-foreground">
                       ₹{pkg.price.toLocaleString()}
                     </span>
-                    {pkg.originalPrice && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        ₹{pkg.originalPrice.toLocaleString()}
-                      </span>
-                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {Math.floor(Math.random() * 50) + 10} bookings this month
@@ -462,7 +450,7 @@ export default function PackagesPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
                 {editingPackage ? 'Edit Package' : 'Add New Package'}
@@ -497,23 +485,10 @@ export default function PackagesPage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   rows={3}
-                  required
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  type="url"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Duration (min)</label>
                   <input
@@ -542,74 +517,111 @@ export default function PackagesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Original Price (₹)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="originalPrice"
-                  value={formData.originalPrice}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  min="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Popularity</label>
-                <select
-                  name="popularity"
-                  value={formData.popularity}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select popularity</option>
-                  <option value="Most Popular">Most Popular</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Luxury">Luxury</option>
-                  <option value="Standard">Standard</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Start Date
-                  </label>
-                  <div className="relative group">
+                <label className="block text-sm font-medium mb-1">Image</label>
+                {formData.image ? (
+                  <div className="space-y-3">
+                    <div className="relative w-full h-40 rounded-md overflow-hidden border border-border">
+                      <Image
+                        src={formData.image}
+                        alt="Package image"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="inline-flex items-center px-3 py-2 border border-border rounded-md cursor-pointer bg-background hover:bg-accent text-sm">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageFileUpload(file);
+                          }}
+                        />
+                        {uploadingImage ? 'Uploading…' : 'Replace Image'}
+                      </label>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setFormData({ ...formData, image: '' })}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="inline-flex items-center px-3 py-2 border border-dashed border-border rounded-md cursor-pointer bg-background hover:bg-accent text-sm">
                     <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={(e) => {
-                        const input = e.target as HTMLInputElement;
-                        input.showPicker?.();
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageFileUpload(file);
                       }}
                     />
-                    <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none group-hover:text-primary transition-colors" />
-                  </div>
+                    {uploadingImage ? 'Uploading…' : 'Upload Image'}
+                  </label>
+                )}
+              </div>
+
+              {/* original price removed */}
+
+              {/* popularity field removed */}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="active">Active</option>
+                    <option value="limited">Limited</option>
+                    <option value="promo">Promo</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    End Date
-                  </label>
-                  <div className="relative group">
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={(e) => {
-                        const input = e.target as HTMLInputElement;
-                        input.showPicker?.();
-                      }}
-                    />
-                    <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none group-hover:text-primary transition-colors" />
-                  </div>
+                  <label className="block text-sm font-medium mb-1">Main Category</label>
+                  <select
+                    name="mainCategory"
+                    value={selectedMainCategoryId}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedMainCategoryId(val);
+                      // reset selected subcategory when main changes
+                      setFormData({ ...formData, categoryId: '' });
+                    }}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select main category</option>
+                    {mainCategories.map((mc) => (
+                      <option key={mc.id} value={mc.id}>{mc.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Subcategory</label>
+                  <select
+                    name="categoryId"
+                    value={formData.categoryId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    disabled={!selectedMainCategoryId}
+                  >
+                    <option value="">Select subcategory</option>
+                    {subcategories.map((sc) => (
+                      <option key={sc.id} value={sc.id}>{sc.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+
+              {/* start/end date fields removed */}
 
               <div className="flex items-center space-x-2">
                 <input

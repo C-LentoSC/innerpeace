@@ -8,6 +8,9 @@ export interface Category {
   icon: string | null;
   isActive: boolean;
   sortOrder: number;
+  parentId?: string | null;
+  parent?: Pick<Category, "id" | "name" | "slug"> | null;
+  children?: Array<Pick<Category, "id" | "name" | "slug" | "isActive" | "sortOrder">>;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +21,8 @@ export interface CreateCategoryData {
   color?: string;
   icon?: string;
   isActive?: boolean;
+  sortOrder?: number;
+  parentId?: string | null; // set to a parent category to create a subcategory
 }
 
 export interface UpdateCategoryData {
@@ -26,6 +31,8 @@ export interface UpdateCategoryData {
   color?: string;
   icon?: string;
   isActive?: boolean;
+  sortOrder?: number;
+  parentId?: string | null; // update parent to move category under a different main category
 }
 
 // Fetch all categories
@@ -113,6 +120,23 @@ export async function fetchCategory(id: string): Promise<Category> {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to fetch category");
+  }
+
+  return response.json();
+}
+
+// Fetch subcategories for a given main category by id or slug
+export async function fetchSubcategories(idOrSlug: string): Promise<Category[]> {
+  const response = await fetch(`/api/categories/${idOrSlug}/subcategories`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to fetch subcategories");
   }
 
   return response.json();

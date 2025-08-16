@@ -70,21 +70,35 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { customerId, therapistId, serviceId, date, time, duration, price, notes, status } = body;
+    const { customerId, therapistId, serviceId, packageId, date, time, duration, price, notes, status } = body as {
+      customerId?: string;
+      therapistId?: string | null;
+      serviceId?: string | null;
+      packageId?: string | null;
+      date?: string;
+      time?: string;
+      duration?: string | number;
+      price?: string | number;
+      notes?: string | null;
+      status?: string;
+    };
+
+    // Build update data, ignoring empty strings and undefined values
+    const updateData: any = {};
+    if (typeof customerId === 'string' && customerId) updateData.customerId = customerId;
+    if (therapistId !== undefined) updateData.therapistId = therapistId ? String(therapistId) : null;
+    if (serviceId !== undefined) updateData.serviceId = serviceId ? String(serviceId) : null;
+    if (packageId !== undefined) updateData.packageId = packageId ? String(packageId) : null;
+    if (date) updateData.date = new Date(date);
+    if (typeof time === 'string' && time) updateData.time = time;
+    if (duration !== undefined && duration !== null && String(duration) !== '') updateData.duration = parseInt(String(duration));
+    if (price !== undefined && price !== null && String(price) !== '') updateData.price = parseFloat(String(price));
+    if (typeof status === 'string' && status) updateData.status = status;
+    if (notes !== undefined) updateData.notes = notes;
 
     const booking = await prisma.booking.update({
       where: { id },
-      data: {
-        customerId,
-        therapistId,
-        serviceId,
-        date: date ? new Date(date) : undefined,
-        time,
-        duration: duration ? parseInt(duration) : undefined,
-        price: price ? parseFloat(price) : undefined,
-        status,
-        notes,
-      },
+      data: updateData,
       include: {
         customer: {
           select: {
@@ -105,6 +119,7 @@ export async function PUT(
             category: true,
           },
         },
+        package: true,
       },
     });
 

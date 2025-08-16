@@ -13,11 +13,23 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { packageId, date, time, notes, userName, userEmail, userPhone, therapistId } = body;
+    const { packageId, date, time, start, end, duration: durationFromBody, notes, userName, userEmail, userPhone, therapistId } = body as {
+      packageId: string;
+      date: string;
+      time?: string;
+      start?: string;
+      end?: string;
+      duration?: number;
+      notes?: string;
+      userName?: string;
+      userEmail?: string;
+      userPhone?: string;
+      therapistId?: string;
+    };
 
-    if (!packageId || !date || !time) {
+    if (!packageId || !date || !(time || start)) {
       return NextResponse.json(
-        { error: "Missing required fields: packageId, date, time" },
+        { error: "Missing required fields: packageId, date, and time or start" },
         { status: 400 }
       );
     }
@@ -42,17 +54,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or inactive package" }, { status: 400 });
     }
 
-    // Normalize date to start of day for equality checks (but we store exact date)
+    // Normalize date
     const bookingDate = new Date(date);
 
-    // Slot locking: deny if any booking exists with same date+time that is pending or confirmed
-    const conflict = await prisma.booking.findFirst({
+    // Determine booking start time string and duration minutes
+    const timeStr = (start || time) as string;
+    // compute duration: body.duration > end-start > pkg.duration
+    let durationMinutes = 0;
+    if (typeof durationFromBody === "number" && durationFromBody > 0) {
+      durationMinutes = durationFromBody;
+    } else if (start && end) {
+      const [sh, sm] = start.split(":").map((v) => parseInt(v, 10));
+      const [eh, em] = end.split(":").map((v) => parseInt(v, 10));
+      if (!isNaN(sh) && !isNaN(sm) && !isNaN(eh) && !isNaN(em)) {
+        const sMin = sh * 60 + sm;
+        const eMin = eh * 60 + em;
+        if (eMin > sMin) durationMinutes = eMin - sMin;
+      }
+    }
+    if (!durationMinutes && pkg.duration && pkg.duration > 0) {
+      durationMinutes = pkg.duration;
+    }
+    if (!durationMinutes) durationMinutes = 60;
+
+    // Slot locking: deny overlaps on same date
+    const [hh, mm] = String(timeStr).split(":").map((v) => parseInt(v, 10));
+    if (isNaN(hh) || isNaN(mm)) {
+      return NextResponse.json({ error: "Invalid time format, expected HH:mm" }, { status: 400 });
+    }
+    const reqStart = hh * 60 + mm;
+    const reqEnd = reqStart + durationMinutes;
+
+    const existing = await prisma.booking.findMany({
       where: {
         date: bookingDate,
-        time: String(time),
         status: { in: ["pending", "confirmed"] },
+        ...(therapistId ? { therapistId: String(therapistId) } : {}),
       },
-      select: { id: true },
+      select: { id: true, time: true, duration: true },
+    });
+
+    const conflict = existing.find((b) => {
+      const [bh, bm] = String(b.time).split(":").map((v) => parseInt(v, 10));
+      if (isNaN(bh) || isNaN(bm)) return false;
+      const existingStart = bh * 60 + bm;
+      const existingEnd = existingStart + (b.duration || 0);
+      return existingStart < reqEnd && existingEnd > reqStart;
     });
 
     if (conflict) {
@@ -68,8 +115,8 @@ export async function POST(req: NextRequest) {
         therapistId: therapistId ? String(therapistId) : undefined,
         packageId: String(packageId),
         date: bookingDate,
-        time: String(time),
-        duration: pkg.duration,
+        time: String(timeStr),
+        duration: durationMinutes,
         price: pkg.price,
         status: "pending", // pending until admin approves
         notes: notes || undefined,

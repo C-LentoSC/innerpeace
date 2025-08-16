@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
  
@@ -112,6 +112,10 @@ model Category {
   icon        String?  // Icon name for UI
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
+  // Parent-child relationship for subcategories (Option A)
+  parentId    String?
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
   
   services    Service[]
   packages    Package[]
@@ -177,6 +181,7 @@ model Package {
   description String
   duration    Int      // total minutes
   price       Decimal
+  status      String   @default("active") // e.g., active, limited, promo
   originalPrice Decimal?
   isActive    Boolean  @default(true)
   popularity  String?  // "Most Popular", "Premium", etc.

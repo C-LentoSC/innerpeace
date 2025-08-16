@@ -25,6 +25,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Bookings", href: "/admin/bookings", icon: Calendar },
   { name: "Customers", href: "/admin/customers", icon: Users },
+  { name: "Therapists", href: "/admin/therapists", icon: Users },
   { name: "Packages", href: "/admin/packages", icon: Package },
   { name: "Categories", href: "/admin/category", icon: FolderOpen },
   { name: "Gallery", href: "/admin/gallery", icon: Image },

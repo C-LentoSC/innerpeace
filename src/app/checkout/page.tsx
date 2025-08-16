@@ -56,12 +56,15 @@ function CheckoutContent() {
   const [preferredGender, setPreferredGender] = useState<"any" | "male" | "female">("any");
   const [specialRequests, setSpecialRequests] = useState("");
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "bank_transfer">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"pay_now" | "pay_at_branch">("pay_now");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const packageId = searchParams.get("packageId");
   const date = searchParams.get("date");
   const time = searchParams.get("time");
+  const start = searchParams.get("start");
+  const end = searchParams.get("end");
+  const duration = searchParams.get("duration");
 
   useEffect(() => {
     if (session?.user) {
@@ -97,11 +100,15 @@ function CheckoutContent() {
   // Fetch available therapists
   useEffect(() => {
     async function fetchTherapists() {
-      if (!date || !time) return;
+      const when = start || time;
+      if (!date || !when) return;
       
       try {
         setTherapistsLoading(true);
-        const res = await fetch(`/api/therapists?available=true&date=${date}&time=${time}`);
+        const q = new URLSearchParams({ available: "true", date, time: when });
+        if (duration) q.set("duration", duration);
+        if (packageId) q.set("packageId", String(packageId));
+        const res = await fetch(`/api/therapists?${q.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setTherapists(data);
@@ -113,10 +120,11 @@ function CheckoutContent() {
       }
     }
     fetchTherapists();
-  }, [date, time]);
+  }, [date, time, start, duration, packageId]);
 
   const submitBooking = async () => {
-    if (!packageId || !date || !time || !userName || !userEmail || !pkg) return;
+    const when = start || time;
+    if (!packageId || !date || !when || !userName || !userEmail || !pkg) return;
     try {
       setIsSubmitting(true);
       const res = await fetch("/api/checkout", {
@@ -125,7 +133,10 @@ function CheckoutContent() {
         body: JSON.stringify({
           packageId,
           date,
-          time,
+          time: when,
+          start: start || undefined,
+          end: end || undefined,
+          duration: duration ? Number(duration) : undefined,
           userName,
           userEmail,
           userPhone,
@@ -417,54 +428,54 @@ function CheckoutContent() {
 
               <div className="space-y-3">
                 <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === "card" ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/30'
+                  paymentMethod === "pay_now" ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/30'
                 }`}>
                   <input
                     type="radio"
                     name="payment"
-                    value="card"
-                    checked={paymentMethod === "card"}
-                    onChange={() => setPaymentMethod("card")}
+                    value="pay_now"
+                    checked={paymentMethod === "pay_now"}
+                    onChange={() => setPaymentMethod("pay_now")}
                     className="sr-only"
                   />
                   <div className="flex items-center gap-3 w-full">
                     <CreditCard className="h-6 w-6 text-primary" />
                     <div className="flex-1">
-                      <h4 className="font-medium">Credit/Debit Card</h4>
-                      <p className="text-sm text-muted-foreground">Secure payment via card</p>
+                      <h4 className="font-medium">Pay Now</h4>
+                      <p className="text-sm text-muted-foreground">Pay online now</p>
                     </div>
-                    {paymentMethod === "card" && <CheckCircle className="h-5 w-5 text-primary" />}
+                    {paymentMethod === "pay_now" && <CheckCircle className="h-5 w-5 text-primary" />}
                   </div>
                 </label>
 
                 <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === "bank_transfer" ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/30'
+                  paymentMethod === "pay_at_branch" ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/30'
                 }`}>
                   <input
                     type="radio"
                     name="payment"
-                    value="bank_transfer"
-                    checked={paymentMethod === "bank_transfer"}
-                    onChange={() => setPaymentMethod("bank_transfer")}
+                    value="pay_at_branch"
+                    checked={paymentMethod === "pay_at_branch"}
+                    onChange={() => setPaymentMethod("pay_at_branch")}
                     className="sr-only"
                   />
                   <div className="flex items-center gap-3 w-full">
                     <Building2 className="h-6 w-6 text-primary" />
                     <div className="flex-1">
-                      <h4 className="font-medium">Bank Transfer</h4>
-                      <p className="text-sm text-muted-foreground">Direct bank transfer</p>
+                      <h4 className="font-medium">Pay at Salon</h4>
+                      <p className="text-sm text-muted-foreground">Pay during your visit</p>
                     </div>
-                    {paymentMethod === "bank_transfer" && <CheckCircle className="h-5 w-5 text-primary" />}
+                    {paymentMethod === "pay_at_branch" && <CheckCircle className="h-5 w-5 text-primary" />}
                   </div>
                 </label>
 
-                {paymentMethod === "bank_transfer" && (
+                {paymentMethod === "pay_at_branch" && (
                   <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
                       <div className="text-sm text-blue-800 dark:text-blue-200">
-                        <p className="font-medium mb-1">Bank Transfer Instructions</p>
-                        <p>You will receive detailed bank account information after placing your order. Your booking will be confirmed once payment is received.</p>
+                        <p className="font-medium mb-1">Pay at Branch</p>
+                        <p>You can complete the payment at our branch when you arrive. Your booking will be held and confirmed on payment.</p>
                       </div>
                     </div>
                   </div>
@@ -509,7 +520,7 @@ function CheckoutContent() {
                         <Clock className="h-4 w-4" />
                         <span>Time</span>
                       </div>
-                      <span className="font-medium">{time || "—"}</span>
+                      <span className="font-medium">{start ? (end ? `${start} - ${end}` : start) : (time || "—")}</span>
                     </div>
 
                     {pkg.durationInMinutes && (
@@ -546,7 +557,7 @@ function CheckoutContent() {
 
                   <Button 
                     className="w-full py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all" 
-                    disabled={isSubmitting || !date || !time || !userName || !userEmail} 
+                    disabled={isSubmitting || !date || !(time || start) || !userName || !userEmail} 
                     onClick={submitBooking}
                   >
                     {isSubmitting ? (

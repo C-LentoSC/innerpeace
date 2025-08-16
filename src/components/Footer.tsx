@@ -73,18 +73,29 @@ const Footer = () => {
               <h4 className="text-xl font-medium text-foreground">
                 {FOOTER_DATA.sections.pages.title}
               </h4>
-              <ul className="space-y-3">
-                {FOOTER_DATA.sections.pages.links.map((link, index) => (
-                  <li key={index}>
-                    <Link
-                      href={link.href}
-                      className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              {(() => {
+                // Use app's actual routes to avoid 404s
+                const pageLinks = [
+                  { label: 'Login', href: '/signin' },
+                  { label: 'Bookings', href: '/account/bookings' },
+                  { label: 'Create Account', href: '/signup' },
+                  { label: 'Questions', href: '/contact' }, // No /questions route; point to Contact
+                ];
+                return (
+                  <ul className="space-y-3">
+                    {pageLinks.map((link, index) => (
+                      <li key={index}>
+                        <Link
+                          href={link.href}
+                          className="text-muted-foreground hover:text-warm-gold transition-colors duration-200"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
             </div>
 
             {/* Social Links */}

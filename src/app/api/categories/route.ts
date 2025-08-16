@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q");
 
-    const categories = await prisma.category.findMany({
+    // Temporary cast until Prisma client is regenerated to include parent/children in types
+    const categories = (await (prisma.category as any).findMany({
       where: q
         ? {
             OR: [
@@ -23,9 +24,11 @@ export async function GET(request: NextRequest) {
         sortOrder: "asc",
       },
       include: {
+        parent: true,
+        children: true,
         _count: { select: { services: true } },
       },
-    });
+    })) as any[];
 
     const payload = categories.map((c) => ({
       id: c.id,
@@ -36,7 +39,12 @@ export async function GET(request: NextRequest) {
       icon: c.icon,
       isActive: c.isActive,
       sortOrder: c.sortOrder,
-      servicesCount: c._count?.services ?? 0,
+      parentId: (c as any).parentId ?? null,
+      parent: (c as any).parent
+        ? { id: c.parent.id, name: c.parent.name, slug: c.parent.slug }
+        : null,
+      children: ((c as any).children || []).map((ch: any) => ({ id: ch.id, name: ch.name, slug: ch.slug })),
+      servicesCount: (c as any)._count?.services ?? 0,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
     }));
@@ -68,6 +76,9 @@ export async function POST(request: NextRequest) {
     // Validate input data
     const validatedData = await createCategorySchema.parseAsync(body);
     const { name, description, color, icon, isActive } = validatedData;
+    // Optional hierarchy/order fields from raw body (until Zod schema updated)
+    const parentId: string | null = body.parentId ?? null;
+    const sortOrderInput: number | null = body.sortOrder ?? null;
 
     // Generate slug from name
     const slug = name
@@ -97,9 +108,10 @@ export async function POST(request: NextRequest) {
     });
 
     const nextSortOrder = lastCategory ? lastCategory.sortOrder + 1 : 1;
+    const finalSortOrder = typeof sortOrderInput === 'number' ? sortOrderInput : nextSortOrder;
 
     // Create category
-    const category = await prisma.category.create({
+    const category = await (prisma.category as any).create({
       data: {
         name: name,
         description: description || null,
@@ -107,8 +119,9 @@ export async function POST(request: NextRequest) {
         color: color || "#c9d1a0",
         icon: icon || "Sparkles",
         isActive: isActive !== undefined ? isActive : true,
-        sortOrder: nextSortOrder,
-      },
+        sortOrder: finalSortOrder,
+        parentId: parentId,
+      } as any,
     });
 
     return NextResponse.json(category, { status: 201 });

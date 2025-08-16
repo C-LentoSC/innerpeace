@@ -42,83 +42,106 @@ async function main() {
     },
   });
 
-  // Create categories
-  const massageCategory = await prisma.category.create({
+  // Reset data to make seed idempotent (respect relation order)
+  await prisma.booking.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.service.deleteMany();
+  await prisma.package.deleteMany();
+  await prisma.gallery.deleteMany();
+  await prisma.category.deleteMany();
+
+  // Create main categories (new structure)
+  const headSpa = await prisma.category.create({
     data: {
-      name: "Massage Therapy",
-      description: "Various massage techniques",
-      slug: "massage-therapy",
+      name: "Head Spa",
+      description: "Premium scalp and head spa therapies",
+      slug: "head-spa",
       color: "#8B5CF6",
-      icon: "massage",
+      icon: "head",
       sortOrder: 1,
     },
   });
 
-  const facialCategory = await prisma.category.create({
+  const beauty = await prisma.category.create({
     data: {
-      name: "Facial Treatments",
-      description: "Skin care and facial treatments",
-      slug: "facial-treatments",
+      name: "Beauty",
+      description: "Beauty care and enhancement services",
+      slug: "beauty",
       color: "#EC4899",
-      icon: "face",
+      icon: "beauty",
       sortOrder: 2,
     },
   });
 
-  const bodyCategory = await prisma.category.create({
+  // Subcategories
+  const scalpCare = await prisma.category.create({
     data: {
-      name: "Body Treatments",
-      description: "Body wraps and treatments",
-      slug: "body-treatments",
+      name: "Scalp Care",
+      description: "Scalp detox and nourishment",
+      slug: "scalp-care",
       color: "#10B981",
-      icon: "body",
-      sortOrder: 3,
+      icon: "scalp",
+      sortOrder: 1,
+      parentId: headSpa.id,
     },
   });
 
-  const aromaCategory = await prisma.category.create({
+  const nails = await prisma.category.create({
     data: {
-      name: "Aromatherapy",
-      description: "Essential oil treatments",
-      slug: "aromatherapy",
+      name: "Nails",
+      description: "Nail care and treatments",
+      slug: "nails",
       color: "#F59E0B",
-      icon: "aroma",
-      sortOrder: 4,
+      icon: "nails",
+      sortOrder: 1,
+      parentId: beauty.id,
     },
   });
 
-  console.log("Created categories");
+  const facial = await prisma.category.create({
+    data: {
+      name: "Facial",
+      description: "Facial treatments and skin care",
+      slug: "facial",
+      color: "#22D3EE",
+      icon: "face",
+      sortOrder: 2,
+      parentId: beauty.id,
+    },
+  });
+
+  console.log("Created categories (Head Spa, Beauty) and subcategories (Scalp Care, Nails, Facial)");
 
   // Create services
   const service1 = await prisma.service.create({
     data: {
-      name: "Deep Tissue Massage",
-      description: "Intensive muscle therapy",
+      name: "Deep Scalp Detox",
+      description: "Therapeutic scalp cleanse and massage",
       duration: 60,
       price: 2500,
-      categoryId: massageCategory.id,
+      categoryId: scalpCare.id,
       image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=80",
     },
   });
 
   const service2 = await prisma.service.create({
     data: {
-      name: "Swedish Massage",
-      description: "Relaxing full body massage",
+      name: "Relaxing Head Spa",
+      description: "Relaxing head spa session",
       duration: 90,
       price: 3500,
-      categoryId: massageCategory.id,
+      categoryId: headSpa.id,
       image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80",
     },
   });
 
   const service3 = await prisma.service.create({
     data: {
-      name: "Hot Stone Therapy",
-      description: "Heated stone massage therapy",
+      name: "Hot Oil Scalp Therapy",
+      description: "Heated oil massage for scalp and head",
       duration: 75,
       price: 4000,
-      categoryId: massageCategory.id,
+      categoryId: scalpCare.id,
       image: "https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=800&q=80",
     },
   });
@@ -129,7 +152,7 @@ async function main() {
       description: "Deep cleansing facial treatment",
       duration: 45,
       price: 2000,
-      categoryId: facialCategory.id,
+      categoryId: facial.id,
       image: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80",
     },
   });
@@ -140,7 +163,7 @@ async function main() {
       description: "Moisturizing facial treatment",
       duration: 60,
       price: 2800,
-      categoryId: facialCategory.id,
+      categoryId: facial.id,
       image: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=800&q=80",
     },
   });
@@ -148,7 +171,6 @@ async function main() {
   console.log("Created services");
 
   // Reset and create packages
-  await prisma.package.deleteMany();
   await prisma.package.createMany({
     data: [
       {
@@ -161,20 +183,19 @@ async function main() {
         isActive: true,
         popularity: "Most Popular",
         image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&q=80",
-        categoryId: aromaCategory.id, // Aromatherapy package
-        startDate: new Date(),
+        categoryId: headSpa.id,
       },
       {
         name: "Deep Oil Bath",
         description:
-          "Full-body oil massage focusing on relaxation and muscle recovery.",
+          "Hot oil scalp therapy focusing on relaxation and recovery.",
         duration: 75,
         price: 4900,
         originalPrice: 5900,
         isActive: true,
         popularity: "Premium",
         image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200&q=80",
-        categoryId: massageCategory.id, // Massage package
+        categoryId: scalpCare.id,
       },
       {
         name: "Detox & Glow Facial",
@@ -184,18 +205,18 @@ async function main() {
         price: 3200,
         isActive: true,
         image: "https://images.unsplash.com/photo-1512291313931-d4291048e7b6?w=1200&q=80",
-        categoryId: facialCategory.id, // Facial package
+        categoryId: facial.id,
       },
       {
         name: "Hot Stone Relaxation",
         description:
-          "Therapeutic hot stone massage to relieve deep-seated tension.",
+          "Therapeutic warmth to relieve deep-seated tension (head and neck focus).",
         duration: 80,
         price: 4200,
         originalPrice: 4600,
         isActive: true,
         image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80",
-        categoryId: massageCategory.id, // Massage package
+        categoryId: headSpa.id,
       },
       {
         name: "Aroma Bliss Combo",
@@ -206,7 +227,7 @@ async function main() {
         isActive: true,
         popularity: "Trending",
         image: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1200&q=80",
-        categoryId: aromaCategory.id, // Aromatherapy package
+        categoryId: beauty.id,
       },
       {
         name: "Couple's Serenity Package",
@@ -216,7 +237,7 @@ async function main() {
         price: 8900,
         isActive: true,
         image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1200&q=80",
-        categoryId: bodyCategory.id, // Body treatment package
+        categoryId: nails.id,
       },
     ],
   });
@@ -230,7 +251,7 @@ async function main() {
       therapistId: therapist.id,
       serviceId: service1.id,
       date: new Date("2025-08-05"),
-      time: "10:00 AM",
+      time: "10:00",
       duration: 60,
       price: 2500,
       status: "confirmed",
@@ -244,7 +265,7 @@ async function main() {
       therapistId: therapist.id,
       serviceId: service2.id,
       date: new Date("2025-08-05"),
-      time: "2:00 PM",
+      time: "14:00",
       duration: 90,
       price: 3500,
       status: "pending",
@@ -258,7 +279,7 @@ async function main() {
       therapistId: superadmin.id,
       serviceId: service3.id,
       date: new Date("2025-08-05"),
-      time: "4:00 PM",
+      time: "16:00",
       duration: 75,
       price: 4000,
       status: "completed",
@@ -272,7 +293,7 @@ async function main() {
       therapistId: therapist.id,
       serviceId: service4.id,
       date: new Date("2025-08-06"),
-      time: "11:00 AM",
+      time: "11:00",
       duration: 45,
       price: 2000,
       status: "confirmed",

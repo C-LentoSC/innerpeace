@@ -1,17 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  FolderOpen,
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Filter,
-  Eye,
-  ArrowUpDown,
-  Palette,
-} from "lucide-react";
+import { Plus, Edit, Trash2, Search, FolderOpen, Eye, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import {
   fetchCategories,
@@ -24,9 +14,7 @@ import {
 } from "@/lib/api/categories";
 
 // Mock data replaced with real API calls
-interface Category extends CategoryType {
-  servicesCount: number; // This will be calculated or fetched from related services
-}
+// Use API Category type directly; no extra fields
 
 const getStatusColor = (isActive: boolean) => {
   return isActive
@@ -34,50 +22,34 @@ const getStatusColor = (isActive: boolean) => {
     : "bg-muted/20 text-muted-foreground border-muted/20";
 };
 
-const iconMap: { [key: string]: React.ReactNode } = {
-  Sparkles: "✨",
-  Heart: "💖",
-  Sun: "☀️",
-  Leaf: "🍃",
-  Package: "📦",
-};
+// icon/color fields removed from UI
 
-interface Service {
-  id: string;
-  name: string;
-  description: string;
-  duration: number;
-  price: number;
-  categoryId: string;
-  image?: string;
-  isActive: boolean;
-}
 
 export default function CategoryPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<CategoryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(
     null
   );
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    color: "#c9d1a0",
-    icon: "Sparkles",
     isActive: true,
-    selectedServices: [] as string[],
   });
+  // Subcategory batch input state (used when creating a main category)
+  const [subInput, setSubInput] = useState("");
+  const [subList, setSubList] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  // Edit modal subcategory state
+  const [editSubInput, setEditSubInput] = useState("");
+  const [editSubList, setEditSubList] = useState<string[]>([]);
 
-  // Load categories and services on component mount
+  // Load categories on component mount
   useEffect(() => {
     loadCategories();
-    loadServices();
   }, []);
 
   const loadCategories = async () => {
@@ -85,14 +57,12 @@ export default function CategoryPage() {
       setLoading(true);
       setError(null);
       const fetchedCategories = await fetchCategories();
-      // Add servicesCount (mock for now - in real app this would come from the API)
-      const categoriesWithCounts = fetchedCategories.map((cat) => ({
+      const normalized = fetchedCategories.map((cat) => ({
         ...cat,
-        servicesCount: Math.floor(Math.random() * 10), // Mock count for now
         createdAt: new Date(cat.createdAt).toISOString().split("T")[0],
         updatedAt: new Date(cat.updatedAt).toISOString().split("T")[0],
       }));
-      setCategories(categoriesWithCounts);
+      setCategories(normalized);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load categories"
@@ -102,56 +72,16 @@ export default function CategoryPage() {
     }
   };
 
-  const loadServices = async () => {
-    try {
-      const response = await fetch('/api/services');
-      if (response.ok) {
-        const fetchedServices = await response.json();
-        setServices(fetchedServices);
-      }
-    } catch (err) {
-      console.error('Failed to load services:', err);
-    }
-  };
+  // services removed
 
-  const updateServiceAssignments = async (categoryId: string, selectedServiceIds: string[]) => {
-    try {
-      // First, unassign all services from this category
-      const currentCategoryServices = services.filter(service => service.categoryId === categoryId);
-      for (const service of currentCategoryServices) {
-        if (!selectedServiceIds.includes(service.id)) {
-          await fetch(`/api/services/${service.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...service, categoryId: null })
-          });
-        }
-      }
-      
-      // Then, assign selected services to this category
-      for (const serviceId of selectedServiceIds) {
-        const service = services.find(s => s.id === serviceId);
-        if (service) {
-          await fetch(`/api/services/${serviceId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...service, categoryId })
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Failed to update service assignments:', err);
-      throw err;
-    }
-  };
+  // services assignment removed
 
   // Filter categories based on search term
-  const filteredCategories = categories.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (category.description &&
-        category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  // Only main categories (no parentId) should render as cards
+  const mainCategories = filteredCategories.filter((c) => !c.parentId);
 
   const handleAddCategory = async () => {
     if (!formData.name.trim()) return;
@@ -160,30 +90,33 @@ export default function CategoryPage() {
       setSubmitting(true);
       const categoryData: CreateCategoryData = {
         name: formData.name,
-        description: formData.description || undefined,
-        color: formData.color,
-        icon: formData.icon,
         isActive: formData.isActive,
       };
 
       const newCategory = await createCategory(categoryData);
-      
-      // Update service assignments
-      if (formData.selectedServices.length > 0) {
-        await updateServiceAssignments(newCategory.id, formData.selectedServices);
+
+      // If creating a main category and user provided subcategories, batch create them
+      if (subList.length > 0) {
+        const names = subList
+          .map((n) => n.trim())
+          .filter((n) => n.length > 0);
+        if (names.length > 0) {
+          await Promise.all(
+            names.map((name) =>
+              createCategory({ name, isActive: true, parentId: newCategory.id })
+            )
+          );
+        }
       }
-      
+
       await loadCategories(); // Refresh the list
-      await loadServices(); // Refresh services to show updated assignments
       setShowAddModal(false);
       setFormData({
         name: "",
-        description: "",
-        color: "#c9d1a0",
-        icon: "Sparkles",
         isActive: true,
-        selectedServices: [],
       });
+      setSubInput("");
+      setSubList([]);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to create category"
@@ -200,29 +133,42 @@ export default function CategoryPage() {
       setSubmitting(true);
       const categoryData: UpdateCategoryData = {
         name: formData.name,
-        description: formData.description || undefined,
-        color: formData.color,
-        icon: formData.icon,
         isActive: formData.isActive,
       };
 
       await updateCategory(selectedCategory.id, categoryData);
-      
-      // Update service assignments
-      await updateServiceAssignments(selectedCategory.id, formData.selectedServices);
-      
+      // Diff subcategories: create new ones, delete removed ones
+      const existingChildren = selectedCategory.children || [];
+      const existingNames = existingChildren.map((c) => c.name.toLowerCase().trim());
+      const newNames = editSubList
+        .map((n) => n.toLowerCase().trim())
+        .filter((n) => n.length > 0);
+
+      const toCreate = newNames.filter((n) => !existingNames.includes(n));
+      const toDelete = existingChildren
+        .filter((c) => !newNames.includes(c.name.toLowerCase().trim()))
+        .map((c) => c.id);
+
+      if (toCreate.length > 0) {
+        await Promise.all(
+          toCreate.map((name) =>
+            createCategory({ name, isActive: true, parentId: selectedCategory.id })
+          )
+        );
+      }
+      if (toDelete.length > 0) {
+        await Promise.all(toDelete.map((id) => deleteCategory(id)));
+      }
+
       await loadCategories(); // Refresh the list
-      await loadServices(); // Refresh services to show updated assignments
       setShowEditModal(false);
       setSelectedCategory(null);
       setFormData({
         name: "",
-        description: "",
-        color: "#c9d1a0",
-        icon: "Sparkles",
         isActive: true,
-        selectedServices: [],
       });
+      setEditSubInput("");
+      setEditSubList([]);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to update category"
@@ -245,18 +191,16 @@ export default function CategoryPage() {
     }
   };
 
-  const openEditModal = (category: Category) => {
+  const openEditModal = (category: CategoryType) => {
     setSelectedCategory(category);
-    // Get services assigned to this category
-    const categoryServices = services.filter(service => service.categoryId === category.id).map(service => service.id);
     setFormData({
       name: category.name,
-      description: category.description || "",
-      color: category.color || "#c9d1a0",
-      icon: category.icon || "Sparkles",
       isActive: category.isActive,
-      selectedServices: categoryServices,
     });
+    // Initialize edit subcategory list from current children names
+    const names = (category.children || []).map((c) => c.name);
+    setEditSubList(names);
+    setEditSubInput("");
     setShowEditModal(true);
   };
 
@@ -267,9 +211,6 @@ export default function CategoryPage() {
     try {
       const categoryData: UpdateCategoryData = {
         name: category.name,
-        description: category.description || undefined,
-        color: category.color || "#c9d1a0",
-        icon: category.icon || "Sparkles",
         isActive: !category.isActive,
       };
 
@@ -336,9 +277,15 @@ export default function CategoryPage() {
             Manage service categories and organize your offerings
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-6">
+        <div className="div">
           <Button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              // Reset form and subcategory input when opening Add modal
+              setFormData({ name: "", isActive: true });
+              setSubInput("");
+              setSubList([]);
+              setShowAddModal(true);
+            }}
             leftIcon={<Plus className="h-4 w-4" />}
           >
             Add Category
@@ -346,7 +293,7 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      {/* Stats cards */}
+      {/* Stats cards (separate main categories vs subcategories) */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center">
@@ -358,7 +305,7 @@ export default function CategoryPage() {
                 Total Categories
               </p>
               <p className="text-2xl font-bold text-foreground">
-                {categories.length}
+                {categories.filter((c) => !c.parentId).length}
               </p>
             </div>
           </div>
@@ -373,38 +320,37 @@ export default function CategoryPage() {
                 Active Categories
               </p>
               <p className="text-2xl font-bold text-foreground">
-                {categories.filter((cat) => cat.isActive).length}
+                {categories.filter((c) => !c.parentId && c.isActive).length}
               </p>
             </div>
           </div>
         </div>
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center">
-            <div className="p-2 rounded-lg bg-warm-gold/20">
-              <ArrowUpDown className="h-6 w-6 text-warm-gold" />
+            <div className="p-2 rounded-lg bg-primary/20">
+              <FolderOpen className="h-6 w-6 text-primary" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">
-                Total Services
+                Total Subcategories
               </p>
               <p className="text-2xl font-bold text-foreground">
-                {categories.reduce((sum, cat) => sum + cat.servicesCount, 0)}
+                {categories.filter((c) => c.parentId).length}
               </p>
             </div>
           </div>
         </div>
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center">
-            <div className="p-2 rounded-lg bg-sage-green/20">
-              <Palette className="h-6 w-6 text-sage-green" />
+            <div className="p-2 rounded-lg bg-success/20">
+              <Eye className="h-6 w-6 text-success" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">
-                Most Popular
+                Active Subcategories
               </p>
-              <p className="text-sm font-bold text-foreground">
-                {categories.sort((a, b) => b.servicesCount - a.servicesCount)[0]
-                  ?.name || "N/A"}
+              <p className="text-2xl font-bold text-foreground">
+                {categories.filter((c) => c.parentId && c.isActive).length}
               </p>
             </div>
           </div>
@@ -425,9 +371,6 @@ export default function CategoryPage() {
             className="block w-full rounded-lg border border-border bg-background py-2 pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-        <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
-          Filter
-        </Button>
       </div>
 
       {/* Categories grid */}
@@ -462,31 +405,23 @@ export default function CategoryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCategories.map((category) => (
+          {mainCategories.map((category) => (
             <div
               key={category.id}
               className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                    style={{ backgroundColor: category.color + "40" }}
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {category.name}
+                  </h3>
+                  <span
+                    className={`inline-flex mt-1 px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                      category.isActive
+                    )}`}
                   >
-                    {iconMap[category.icon || "Sparkles"] || "📁"}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {category.name}
-                    </h3>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                        category.isActive
-                      )}`}
-                    >
-                      {category.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
+                    {category.isActive ? "Active" : "Inactive"}
+                  </span>
                 </div>
                 <div className="flex space-x-2">
                   <Button
@@ -507,36 +442,20 @@ export default function CategoryPage() {
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                {category.description}
-              </p>
-
-              <div className="flex justify-between items-center text-sm text-muted-foreground">
-                <span>{category.servicesCount} services</span>
-                <span>Updated {category.updatedAt}</span>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                      style={{ backgroundColor: category.color || "#c9d1a0" }}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      /{category.slug}
-                    </span>
+              {category.children && category.children.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Subcategories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {category.children.map((child) => (
+                      <span key={child.id} className="px-2 py-0.5 text-xs rounded-full border border-border">
+                        {child.name}
+                      </span>
+                    ))}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => toggleStatus(category.id)}
-                    className="text-xs"
-                  >
-                    {category.isActive ? "Deactivate" : "Activate"}
-                  </Button>
                 </div>
-              </div>
+              )}
+
+              
             </div>
           ))}
         </div>
@@ -564,53 +483,73 @@ export default function CategoryPage() {
                   placeholder="Enter category name"
                 />
               </div>
+              {/* description/color/icon fields removed */}
+
+              
+
+              {/* Subcategories batch input */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Enter category description"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Color
-                  </label>
-                  <input
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) =>
-                      setFormData({ ...formData, color: e.target.value })
-                    }
-                    className="w-full h-10 rounded-lg border border-border bg-background"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Icon
-                  </label>
-                  <select
-                    value={formData.icon}
-                    onChange={(e) =>
-                      setFormData({ ...formData, icon: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Subcategories (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={subInput}
+                      onChange={(e) => setSubInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const v = subInput.trim();
+                          if (v && !subList.includes(v)) {
+                            setSubList([...subList, v]);
+                            setSubInput("");
+                          }
+                        }
+                      }}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="Type a subcategory and press Enter or click +"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const v = subInput.trim();
+                      if (v && !subList.includes(v)) {
+                        setSubList([...subList, v]);
+                        setSubInput("");
+                      }
+                    }}
+                    disabled={!subInput.trim()}
                   >
-                    <option value="Sparkles">✨ Sparkles</option>
-                    <option value="Heart">💖 Heart</option>
-                    <option value="Sun">☀️ Sun</option>
-                    <option value="Leaf">🍃 Leaf</option>
-                    <option value="Package">📦 Package</option>
-                  </select>
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
+                {subList.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {subList.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-xs"
+                      >
+                        {name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSubList(subList.filter((n) => n !== name))
+                          }
+                          className="ml-1 text-muted-foreground hover:text-foreground"
+                          aria-label={`Remove ${name}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
+
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -629,44 +568,16 @@ export default function CategoryPage() {
                 </label>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Assign Services
-                </label>
-                <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
-                  {services.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No services available</p>
-                  ) : (
-                    services.map((service) => (
-                      <div key={service.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`service-${service.id}`}
-                          checked={formData.selectedServices.includes(service.id)}
-                          onChange={(e) => {
-                            const updatedServices = e.target.checked
-                              ? [...formData.selectedServices, service.id]
-                              : formData.selectedServices.filter(id => id !== service.id);
-                            setFormData({ ...formData, selectedServices: updatedServices });
-                          }}
-                          className="rounded border-border text-primary focus:ring-primary"
-                        />
-                        <label
-                          htmlFor={`service-${service.id}`}
-                          className="text-sm text-foreground flex-1 cursor-pointer"
-                        >
-                          {service.name} - ₹{service.price} ({service.duration}min)
-                        </label>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              {/* services assignment removed */}
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
                 variant="ghost"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setSubInput("");
+                  setSubList([]);
+                }}
                 disabled={submitting}
               >
                 Cancel
@@ -707,50 +618,64 @@ export default function CategoryPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Description
+                  Subcategories
                 </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Enter category description"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Color
-                  </label>
-                  <input
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) =>
-                      setFormData({ ...formData, color: e.target.value })
-                    }
-                    className="w-full h-10 rounded-lg border border-border bg-background"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Icon
-                  </label>
-                  <select
-                    value={formData.icon}
-                    onChange={(e) =>
-                      setFormData({ ...formData, icon: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={editSubInput}
+                      onChange={(e) => setEditSubInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const v = editSubInput.trim();
+                          if (v && !editSubList.includes(v)) {
+                            setEditSubList([...editSubList, v]);
+                            setEditSubInput("");
+                          }
+                        }
+                      }}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="Type a subcategory and press Enter or click +"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const v = editSubInput.trim();
+                      if (v && !editSubList.includes(v)) {
+                        setEditSubList([...editSubList, v]);
+                        setEditSubInput("");
+                      }
+                    }}
+                    disabled={!editSubInput.trim()}
                   >
-                    <option value="Sparkles">✨ Sparkles</option>
-                    <option value="Heart">💖 Heart</option>
-                    <option value="Sun">☀️ Sun</option>
-                    <option value="Leaf">🍃 Leaf</option>
-                    <option value="Package">📦 Package</option>
-                  </select>
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
+                {editSubList.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {editSubList.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-xs"
+                      >
+                        {name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditSubList(editSubList.filter((n) => n !== name))
+                          }
+                          className="ml-1 text-muted-foreground hover:text-foreground"
+                          aria-label={`Remove ${name}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex items-center">
                 <input
@@ -770,39 +695,7 @@ export default function CategoryPage() {
                 </label>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Assign Services
-                </label>
-                <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
-                  {services.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No services available</p>
-                  ) : (
-                    services.map((service) => (
-                      <div key={service.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`edit-service-${service.id}`}
-                          checked={formData.selectedServices.includes(service.id)}
-                          onChange={(e) => {
-                            const updatedServices = e.target.checked
-                              ? [...formData.selectedServices, service.id]
-                              : formData.selectedServices.filter(id => id !== service.id);
-                            setFormData({ ...formData, selectedServices: updatedServices });
-                          }}
-                          className="rounded border-border text-primary focus:ring-primary"
-                        />
-                        <label
-                          htmlFor={`edit-service-${service.id}`}
-                          className="text-sm text-foreground flex-1 cursor-pointer"
-                        >
-                          {service.name} - ₹{service.price} ({service.duration}min)
-                        </label>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              {/* services assignment removed */}
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button
@@ -825,7 +718,7 @@ export default function CategoryPage() {
       )}
 
       {/* Empty state */}
-      {filteredCategories.length === 0 && (
+      {mainCategories.length === 0 && (
         <div className="text-center py-12">
           <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-2 text-sm font-medium text-foreground">

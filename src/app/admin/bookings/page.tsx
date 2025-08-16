@@ -73,6 +73,13 @@ interface Service {
   price: number;
 }
 
+interface PackageItem {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
+}
+
 interface User {
   id: string;
   name: string | null;
@@ -113,6 +120,7 @@ export default function BookingsPage() {
   const { data: session, status } = useSession();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [packages, setPackages] = useState<PackageItem[]>([]);
   const [customers, setCustomers] = useState<User[]>([]);
   const [therapists, setTherapists] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,6 +150,7 @@ export default function BookingsPage() {
     customerId: '',
     therapistId: '',
     serviceId: '',
+    packageId: '',
     date: '',
     time: '',
     status: 'pending',
@@ -159,20 +168,25 @@ export default function BookingsPage() {
 
   const fetchData = async () => {
     try {
-      const [bookingsRes, servicesRes, usersRes] = await Promise.all([
+      const [bookingsRes, servicesRes, usersRes, packagesRes] = await Promise.all([
         fetch('/api/bookings'),
         fetch('/api/services'),
-        fetch('/api/users')
+        fetch('/api/users'),
+        fetch('/api/packages')
       ]);
 
       const bookingsData = await bookingsRes.json();
       const servicesData = await servicesRes.json();
       const usersData = await usersRes.json();
+      const packagesData = await packagesRes.json();
 
       setBookings(bookingsData);
       setServices(servicesData);
       setCustomers(usersData.filter((u: { role: string }) => u.role === 'USER'));
-      setTherapists(usersData.filter((u: { role: string }) => u.role === 'ADMIN' || u.role === 'SUPERADMIN'));
+      // Include all users as potential therapists so existing bookings prefill correctly
+      setTherapists(usersData);
+      // packages API returns { packages: [...] }
+      setPackages((packagesData?.packages || []).map((p: any) => ({ id: p.id, name: p.name, duration: p.duration, price: p.price })));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -253,20 +267,22 @@ export default function BookingsPage() {
     e.preventDefault();
     
     try {
-      const selectedService = services.find(s => s.id === formData.serviceId);
-      if (!selectedService) {
-        alert('Please select a valid service');
+      const selectedService = formData.serviceId ? services.find(s => s.id === formData.serviceId) : undefined;
+      const selectedPackage = formData.packageId ? packages.find(p => p.id === formData.packageId) : undefined;
+      if (!selectedService && !selectedPackage) {
+        alert('Please select a Service or a Package');
         return;
       }
 
       const bookingData = {
         customerId: formData.customerId,
         therapistId: formData.therapistId,
-        serviceId: formData.serviceId,
+        serviceId: selectedService ? formData.serviceId : null,
+        packageId: selectedPackage ? formData.packageId : null,
         date: formData.date,
         time: formData.time,
-        duration: selectedService.duration.toString(),
-        price: selectedService.price.toString(),
+        duration: String((selectedService?.duration ?? selectedPackage?.duration) || 60),
+        price: String((selectedService?.price ?? selectedPackage?.price) || 0),
         status: formData.status,
         notes: formData.notes,
       };
@@ -327,13 +343,25 @@ export default function BookingsPage() {
         customerId: booking.customer?.id || '',
         therapistId: booking.therapist?.id || '',
         serviceId: booking.service?.id || '',
+        packageId: booking.package?.id || '',
         date: booking.date,
         time: booking.time,
         status: booking.status,
         notes: booking.notes || ''
       });
     } else {
-      resetForm();
+      // Force clear any previous edit state before opening a fresh create modal
+      setEditingBooking(null);
+      setFormData({
+        customerId: '',
+        therapistId: '',
+        serviceId: '',
+        packageId: '',
+        date: '',
+        time: '',
+        status: 'pending',
+        notes: ''
+      });
     }
     setShowModal(true);
   };
@@ -344,6 +372,7 @@ export default function BookingsPage() {
       customerId: '',
       therapistId: '',
       serviceId: '',
+      packageId: '',
       date: '',
       time: '',
       status: 'pending',
@@ -357,6 +386,11 @@ export default function BookingsPage() {
     setRefreshing(false);
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    resetForm();
+  };
+
   const handleStatusChange = (booking: Booking) => {
     setStatusChangeBooking(booking);
     setNewStatus(booking.status);
@@ -367,19 +401,15 @@ export default function BookingsPage() {
     if (!statusChangeBooking || !newStatus) return;
     
     try {
+      // Build minimal payload: only fields we actually want to change
+      const payload: Record<string, unknown> = { status: newStatus };
+      if (statusChangeBooking.therapist?.id) payload.therapistId = statusChangeBooking.therapist.id;
+      if (statusChangeBooking.service?.id) payload.serviceId = statusChangeBooking.service.id;
+
       const response = await fetch(`/api/bookings/${statusChangeBooking.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...statusChangeBooking,
-          status: newStatus,
-          customerId: statusChangeBooking.customer?.id || '',
-          therapistId: statusChangeBooking.therapist?.id || '',
-          serviceId: statusChangeBooking.service?.id || '',
-          duration: statusChangeBooking.duration.toString(),
-          price: statusChangeBooking.price.toString(),
-          notes: statusChangeBooking.notes || ''
-        })
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
@@ -446,7 +476,7 @@ export default function BookingsPage() {
                 )}
                 Refresh
               </Button>
-              <Button onClick={() => setShowModal(true)} className="rounded-xl">
+              <Button onClick={() => openModal()} className="rounded-xl">
                 <Plus className="h-4 w-4 mr-2" />
                 New Booking
               </Button>
@@ -592,7 +622,7 @@ export default function BookingsPage() {
                 }
               </p>
               {!searchTerm && filters.status === "all" && (
-                <Button onClick={() => setShowModal(true)} className="rounded-xl">
+                <Button onClick={() => openModal()} className="rounded-xl">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Booking
                 </Button>
@@ -797,7 +827,7 @@ export default function BookingsPage() {
                   {editingBooking ? 'Edit Booking' : 'Create New Booking'}
                 </h3>
                 <Button
-                  onClick={() => setShowModal(false)}
+                  onClick={closeModal}
                   variant="ghost"
                   size="sm"
                   className="rounded-full"
@@ -827,49 +857,18 @@ export default function BookingsPage() {
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">Therapist</label>
-                    <select 
+                    <select
                       value={formData.therapistId}
-                      onChange={(e) => setFormData({...formData, therapistId: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, therapistId: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg bg-background/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                       required
                     >
                       <option value="">Select Therapist</option>
-                      {therapists.map(therapist => (
-                        <option key={therapist.id} value={therapist.id}>
-                          {therapist.name || therapist.email}
+                      {therapists.map((user: User) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name || user.email}
                         </option>
                       ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Service</label>
-                    <select 
-                      value={formData.serviceId}
-                      onChange={(e) => setFormData({...formData, serviceId: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg bg-background/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                      required
-                    >
-                      <option value="">Select Service</option>
-                      {services.map(service => (
-                        <option key={service.id} value={service.id}>
-                          {service.name} ({service.duration}min - ₹{service.price})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Status</label>
-                    <select 
-                      value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg bg-background/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
                     </select>
                   </div>
 
@@ -936,7 +935,7 @@ export default function BookingsPage() {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1 rounded-xl">
+                  <Button type="button" variant="outline" onClick={closeModal} className="flex-1 rounded-xl">
                     Cancel
                   </Button>
                   <Button type="submit" className="flex-1 rounded-xl">
