@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import BookingModal from "@/components/BookingModal";
 
 // Types and Interfaces
 interface Service {
@@ -226,6 +229,10 @@ const PackagesSection = ({ data }: PackagesSectionProps) => {
   const [activeCategory, setActiveCategory] = useState<ServiceCategoryType>(
     () => (data[0]?.id ?? '')
   );
+  const [showBooking, setShowBooking] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const { status } = useSession();
+  const router = useRouter();
   
   // Ensure activeCategory stays valid when data updates
   useEffect(() => {
@@ -256,9 +263,14 @@ const PackagesSection = ({ data }: PackagesSectionProps) => {
   }, []);
 
   const handleServiceBook = useCallback((serviceId: string) => {
-    console.log(`Booking service: ${serviceId}`);
-    // Implement booking logic here
-  }, []);
+    if (status === "authenticated") {
+      setSelectedPackageId(serviceId);
+      setShowBooking(true);
+    } else {
+      const params = new URLSearchParams({ callbackUrl: window.location.href });
+      router.push(`/signin?${params.toString()}`);
+    }
+  }, [router, status]);
 
   const handleServiceContact = useCallback((serviceId: string) => {
     console.log(`Contacting about service: ${serviceId}`);
@@ -455,6 +467,14 @@ const PackagesSection = ({ data }: PackagesSectionProps) => {
           )}
         </div>
       </div>
+      {/* Booking Modal */}
+      {showBooking && selectedPackageId && (
+        <BookingModal
+          packageId={selectedPackageId}
+          open={showBooking}
+          onClose={() => setShowBooking(false)}
+        />
+      )}
     </section>
   );
 };
