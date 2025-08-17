@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -23,7 +24,7 @@ interface ServiceCategory {
   services: Service[];
 }
 
-type ServiceCategoryType = 'head-spa' | 'beauty';
+type ServiceCategoryType = string;
 
 // Constants
 const ANIMATION_CONFIG = {
@@ -59,71 +60,10 @@ const UI_CONSTANTS = {
   },
 } as const;
 
-// Service data configuration
-const SERVICE_DATA: ServiceCategory[] = [
-  {
-    id: 'head-spa',
-    label: 'Head SPA',
-    services: [
-      {
-        id: 'inner-peace-ritual-1',
-        title: 'The Inner Peace Ritual',
-        description: 'deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.',
-        price: '5,000',
-        duration: '1 Hour 20 Minutes',
-        image: '/assets/images/1.jpg',
-        imageAlt: 'The Inner Peace Ritual - Deep head spa therapy session',
-        category: 'head-spa'
-      },
-      {
-        id: 'inner-peace-ritual-2',
-        title: 'The Inner Peace Ritual',
-        description: 'deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.',
-        price: '5,000',
-        duration: '1 Hour 20 Minutes',
-        image: '/assets/images/2.jpg',
-        imageAlt: 'The Inner Peace Ritual - Premium spa experience',
-        category: 'head-spa'
-      },
-      {
-        id: 'inner-peace-ritual-3',
-        title: 'The Inner Peace Ritual',
-        description: 'deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.',
-        price: '5,000',
-        duration: '1 Hour 20 Minutes',
-        image: '/assets/images/3.jpg',
-        imageAlt: 'The Inner Peace Ritual - Relaxation therapy',
-        category: 'head-spa'
-      }
-    ]
-  },
-  {
-    id: 'beauty',
-    label: 'Beauty',
-    services: [
-      {
-        id: 'nails-treatment',
-        title: 'Nails',
-        description: 'deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.',
-        price: '3,000',
-        duration: '45 Minutes',
-        image: '/assets/images/4.jpg',
-        imageAlt: 'Professional nails treatment service',
-        category: 'beauty'
-      },
-      {
-        id: 'eye-lashes',
-        title: 'Eye Lashes',
-        description: 'deep head spa therapy, hot oil scalp massage, and aromatherapy for ultimate tranquility.',
-        price: '2,500',
-        duration: '30 Minutes',
-        image: '/assets/images/5.png',
-        imageAlt: 'Eye lashes enhancement treatment',
-        category: 'beauty'
-      }
-    ]
-  }
-];
+// Props for external data injection
+interface PackagesSectionProps {
+  data: ServiceCategory[];
+}
 
 // Utility functions
 const getTabClasses = (isActive: boolean): string => {
@@ -281,9 +221,21 @@ const ServiceCard = ({
 };
 
 // Main PackagesSection Component
-const PackagesSection = () => {
+const PackagesSection = ({ data }: PackagesSectionProps) => {
   // State
-  const [activeCategory, setActiveCategory] = useState<ServiceCategoryType>('head-spa');
+  const [activeCategory, setActiveCategory] = useState<ServiceCategoryType>(
+    () => (data[0]?.id ?? '')
+  );
+  
+  // Ensure activeCategory stays valid when data updates
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      setActiveCategory('');
+      return;
+    }
+    const exists = data.some((c) => c.id === activeCategory);
+    if (!exists) setActiveCategory(data[0].id);
+  }, [data, activeCategory]);
   
   // Refs
   const sectionRef = useRef<HTMLElement>(null);
@@ -293,10 +245,10 @@ const PackagesSection = () => {
   const serviceRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Computed values
-  const currentServices = useMemo(() => 
-    SERVICE_DATA.find(cat => cat.id === activeCategory)?.services || [],
-    [activeCategory]
-  );
+  const currentServices = useMemo(() => {
+    const services = data.find(cat => cat.id === activeCategory)?.services || [];
+    return services.slice(0, 3);
+  }, [activeCategory, data]);
 
   // Event handlers
   const handleCategoryChange = useCallback((categoryId: ServiceCategoryType) => {
@@ -313,10 +265,7 @@ const PackagesSection = () => {
     // Implement contact logic here
   }, []);
 
-  const handleSeeMorePackages = useCallback(() => {
-    console.log('Navigating to more packages...');
-    // Implement navigation logic here
-  }, []);
+  // Removed unused handler (replaced with Link to packages page)
 
   // Animation setup
   const setupAnimations = useCallback(() => {
@@ -425,14 +374,22 @@ const PackagesSection = () => {
             </h2>
           </header>
 
+          {/* Empty state */}
+          {(!data || data.length === 0) && (
+            <div className="w-full text-center text-zinc-400 py-8">
+              No packages available yet.
+            </div>
+          )}
+
           {/* Category Tabs */}
+          {data && data.length > 0 && (
           <nav 
             ref={tabsRef} 
             className={`flex flex-col sm:flex-row gap-4 sm:gap-5 w-full ${UI_CONSTANTS.maxWidth.tabs}`}
             role="tablist"
             aria-label="Service categories"
           >
-            {SERVICE_DATA.map((category) => (
+            {data.map((category) => (
               <button
                 key={category.id}
                 onClick={() => handleCategoryChange(category.id)}
@@ -445,8 +402,10 @@ const PackagesSection = () => {
               </button>
             ))}
           </nav>
+          )}
 
           {/* Services Container */}
+          {data && data.length > 0 && (
           <div 
             ref={containerRef}
             className="w-full relative rounded-xl overflow-hidden"
@@ -483,17 +442,18 @@ const PackagesSection = () => {
 
             {/* See More Button */}
             <footer className="flex justify-center pb-8 lg:pb-12">
-              <button 
-                onClick={handleSeeMorePackages}
+              <Link
+                href={`/packages?category=${encodeURIComponent(activeCategory)}`}
                 className="px-8 py-2 bg-gradient-to-b from-amber-200 to-amber-400 rounded text-black text-base font-normal font-['Playfair_Display']
                            transition-all duration-300 hover:from-amber-100 hover:to-amber-300 hover:scale-105
                            focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
                 aria-label="View more service packages"
               >
                 See More Packages
-              </button>
+              </Link>
             </footer>
           </div>
+          )}
         </div>
       </div>
     </section>
