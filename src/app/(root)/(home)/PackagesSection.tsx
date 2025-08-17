@@ -265,7 +265,6 @@ const PackagesSection = ({ data }: PackagesSectionProps) => {
     // Implement contact logic here
   }, []);
 
-  // Removed unused handler (replaced with Link to packages page)
 
   // Animation setup
   const setupAnimations = useCallback(() => {

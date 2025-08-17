@@ -1,5 +1,6 @@
 import HeroSection from "./HeroSection";
 import Image from "next/image";
+import { headers } from "next/headers";
 import SecanderySection from "./SecanderySection";
 import PackagesSection from "./PackagesSection";
 import VideoSection from "./VideoSection";
@@ -10,13 +11,17 @@ import ContactSection from "./ContactSection";
 
 async function HomePage() {
   // Fetch packages server-side and map to PackagesSection props shape
-  type UIPackage = { id: string; name: string; description: string; price: number; duration?: number; image?: string | null; category?: { slug: string; name?: string; parent?: { slug: string; name?: string } | null } | null };
+  type UIPackage = { id: string; name: string; description: string; price: number; duration?: number; image?: string | null; category?: { slug: string; parent?: { slug: string; name?: string } | null } | null };
   type UICategory = { id: string; name: string; slug: string };
-  type HomeService = { id: string; title: string; description: string; price: string; duration: string; image: string; imageAlt: string; category: string };
-  let data: Array<{ id: string; label: string; services: HomeService[] }> = [];
+  let data: Array<{ id: string; label: string; services: Array<{ id: string; title: string; description: string; price: string; duration: string; image: string; imageAlt: string; category: string; }> } > = [];
 
   try {
-    const res = await fetch('/api/packages', { cache: 'no-store' });
+    const hdrs = await headers();
+    const host = hdrs.get('host');
+    const protocol = hdrs.get('x-forwarded-proto') || 'http';
+    const base = host ? `${protocol}://${host}` : '';
+    const url = base ? `${base}/api/packages` : `/api/packages`;
+    const res = await fetch(url, { cache: 'no-store' });
     const json = await res.json();
     const list: UIPackage[] = Array.isArray(json?.packages) ? json.packages : [];
     const categories: UICategory[] = Array.isArray(json?.categories) ? json.categories : [];
@@ -32,7 +37,7 @@ async function HomePage() {
     const main = [...preferredCats, ...extras].slice(0, 2);
     data = main.map((c) => ({ id: c.slug, label: c.name, services: [] }));
 
-    const mapToService = (p: UIPackage, cat: string): HomeService => ({
+    const mapToService = (p: UIPackage, cat: string) => ({
       id: p.id,
       title: p.name,
       description: p.description,
@@ -52,18 +57,28 @@ async function HomePage() {
     // Fallback: if no categories or no services were populated, derive categories from packages
     const allServicesCount = data.reduce((sum, c) => sum + c.services.length, 0);
     if (data.length === 0 || allServicesCount === 0) {
-      const buckets = new Map<string, { id: string; label: string; services: HomeService[] }>();
+      type Service = {
+        id: string;
+        title: string;
+        description: string;
+        price: string;
+        duration: string;
+        image: string;
+        imageAlt: string;
+        category: string;
+      };
+      const buckets = new Map<string, { id: string; label: string; services: Service[] }>();
       for (const p of list) {
         const slug = p.category?.parent?.slug || p.category?.slug;
         if (!slug) continue;
-        const label = p.category?.parent?.name || p.category?.name || slug;
+        const label = (p.category?.parent?.name || (p as UIPackage & { category?: { name?: string } }).category?.name || slug) as string;
         if (!buckets.has(slug)) buckets.set(slug, { id: slug, label, services: [] });
         buckets.get(slug)!.services.push(mapToService(p, slug));
       }
       const ordered = [
         ...preferred
           .map((slug) => buckets.get(slug))
-          .filter((b): b is { id: string; label: string; services: HomeService[] } => Boolean(b)),
+          .filter((b): b is { id: string; label: string; services: Service[] } => Boolean(b)),
         ...Array.from(buckets.values()).filter(
           (b) => !preferred.includes(b.id)
         ),
