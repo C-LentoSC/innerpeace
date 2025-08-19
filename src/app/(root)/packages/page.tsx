@@ -8,6 +8,8 @@ import { CURRENCY } from "@/constants/data";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import BookingModal from "@/components/BookingModal";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const PackagesPage = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -34,6 +36,8 @@ const PackagesPage = () => {
   // Subcategory list for the selected main category (fetched dynamically)
   const [subcategories, setSubcategories] = useState<UICategory[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
+  const { status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -414,8 +418,13 @@ const PackagesPage = () => {
                           size="sm"
                           className="px-4 sm:px-6"
                           onClick={() => {
-                            setSelectedPackageId(pkg.id);
-                            setShowBooking(true);
+                            if (status === "authenticated") {
+                              setSelectedPackageId(pkg.id);
+                              setShowBooking(true);
+                            } else {
+                              const params = new URLSearchParams({ callbackUrl: window.location.href });
+                              router.push(`/signin?${params.toString()}`);
+                            }
                           }}
                         >
                           Book now

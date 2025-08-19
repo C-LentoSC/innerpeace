@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -11,51 +11,37 @@ const MeetOurTeamSection = () => {
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const memberRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{
+    id: string | number;
+    name: string;
+    image?: string | null;
+    title?: string | null;
+    experienceYears?: number | null;
+  }>>([]);
 
-  const teamMembers = [
-    {
-      id: 1,
-      name: "Dahunya Nilupika",
-      title: "Founder of Inner Peace",
-      experience: "10 years",
-      image: "/assets/images/user.jpg",
-    },
-    {
-      id: 2,
-      name: "Dahunya Nilupika",
-      title: "Founder of Inner Peace",
-      experience: "10 years",
-      image: "/assets/images/user2.jpg",
-    },
-    {
-      id: 3,
-      name: "Dahunya Nilupika",
-      title: "Founder of Inner Peace",
-      experience: "10 years",
-      image: "/assets/images/user3.jpg",
-    },
-    {
-      id: 4,
-      name: "Dahunya Nilupika",
-      title: "Founder of Inner Peace",
-      experience: "8 years",
-      image: "/assets/images/user4.jpg",
-    },
-    {
-      id: 5,
-      name: "Dahunya Nilupika",
-      title: "Founder of Inner Peace",
-      experience: "8 years",
-      image: "/assets/images/user5.jpg",
-    },
-    {
-      id: 6,
-      name: "Dahunya Nilupika",
-      title: "Founder of Inner Peace",
-      experience: "8 years",
-      image: "/assets/images/user6.jpg",
-    },
-  ];
+  useEffect(() => {
+    let aborted = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/therapists", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load team");
+        const data = (await res.json()) as Array<{
+          id: string;
+          name: string;
+          image?: string | null;
+          title?: string | null;
+          experienceYears?: number | null;
+        }>;
+        if (!aborted) setTeamMembers(data);
+      } catch {
+        if (!aborted) setTeamMembers([]);
+      }
+    }
+    load();
+    return () => {
+      aborted = true;
+    };
+  }, []);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -165,22 +151,30 @@ const MeetOurTeamSection = () => {
             >
               {/* Image Container */}
               <div className="aspect-[4/5] relative overflow-hidden">
-                <Image
-                  src={member.image}
-                  alt={member.name}
-                  fill
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                />
+                {member.image ? (
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-glass-card text-muted-foreground">
+                    {member.name?.charAt(0) || "T"}
+                  </div>
+                )}
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-forest/80 via-dark-forest/20 to-transparent" />
 
                 {/* Member Info */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                   <h3 className="text-lg font-medium mb-1">{member.name}</h3>
-                  <p className="text-sm text-warm-gray mb-2">{member.title}</p>
-                  <p className="text-sm text-forest-green">
-                    {member.experience}
-                  </p>
+                  <p className="text-sm text-warm-gray mb-2">{member.title || "Therapist"}</p>
+                  {typeof member.experienceYears === "number" && (
+                    <p className="text-sm text-forest-green">
+                      {member.experienceYears} years
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

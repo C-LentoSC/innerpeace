@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/Button";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -203,13 +204,15 @@ const GallerySection = () => {
 
             {/* View More Button */}
             <div ref={buttonRef} className="flex justify-center mt-12">
-              <Button
-                variant="default"
-                size="lg"
-                rightIcon={<ArrowRight className="w-5 h-5" />}
-              >
-                View More Gallery
-              </Button>
+              <Link href="/gallery">
+                <Button
+                  variant="default"
+                  size="lg"
+                  rightIcon={<ArrowRight className="w-5 h-5" />}
+                >
+                  View More Gallery
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

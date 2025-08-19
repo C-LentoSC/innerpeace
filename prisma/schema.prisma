@@ -25,6 +25,8 @@ model User {
   password      String?
   address       String?
   mobileNumber  String?
+  title         String?
+  experienceYears Int?
   role          Role            @default(USER)
   accounts      Account[]
   sessions      Session[]
@@ -45,7 +47,7 @@ model User {
  
 model Account {
   id                       String  @id @default(cuid())
-  userId                   String  @unique
+  userId                   String
   type                     String
   provider                 String
   providerAccountId        String

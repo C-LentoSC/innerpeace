@@ -1,10 +1,10 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { ZodError } from "zod";
 import { prisma } from "@/prisma";
 import { signInSchema } from "@/lib/validations";
-import { verifyPassword } from "@/lib/password";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -12,6 +12,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -23,32 +27,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             credentials
           );
 
-          // Find user in database
-          const user = await prisma.user.findUnique({
-            where: { email },
+          // Verify credentials via API route to avoid Edge Runtime issues
+          const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/verify-credentials`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
           });
 
-          if (!user || !user.password) {
-            throw new Error("Invalid credentials.");
+          if (!response.ok) {
+            return null;
           }
 
-          // Verify password
-          const isPasswordValid = await verifyPassword(password, user.password);
-
-          if (!isPasswordValid) {
-            throw new Error("Invalid credentials.");
-          }
-
-          // Return user object
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name || `${user.firstName} ${user.lastName}`,
-            firstName: user.firstName || undefined,
-            lastName: user.lastName || undefined,
-            role: user.role,
-            image: user.image,
-          };
+          const user = await response.json();
+          return user;
         } catch (error) {
           if (error instanceof ZodError) {
             return null;

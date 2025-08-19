@@ -150,7 +150,7 @@ const FAQSection = () => {
                   ref={titleRef}
                   className="text-3xl md:text-4xl lg:text-5xl font-medium text-foreground mb-4"
                 >
-                  Have Any Questions
+                  Frequently Asked Questions
                 </h2>
               </div>
 

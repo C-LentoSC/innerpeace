@@ -1,5 +1,6 @@
 import HeroSection from "./HeroSection";
 import Image from "next/image";
+import { headers } from "next/headers";
 import SecanderySection from "./SecanderySection";
 import PackagesSection from "./PackagesSection";
 import VideoSection from "./VideoSection";
@@ -8,7 +9,86 @@ import ReviewsSections from "./ReviewsSections";
 import FAQSection from "./FAQSection";
 import ContactSection from "./ContactSection";
 
-const HomePage = () => {
+async function HomePage() {
+  // Fetch packages server-side and map to PackagesSection props shape
+  type UIPackage = { id: string; name: string; description: string; price: number; duration?: number; image?: string | null; category?: { slug: string; parent?: { slug: string; name?: string } | null } | null };
+  type UICategory = { id: string; name: string; slug: string };
+  let data: Array<{ id: string; label: string; services: Array<{ id: string; title: string; description: string; price: string; duration: string; image: string; imageAlt: string; category: string; }> } > = [];
+
+  try {
+    const hdrs = await headers();
+    const host = hdrs.get('host');
+    const protocol = hdrs.get('x-forwarded-proto') || 'http';
+    const base = host ? `${protocol}://${host}` : '';
+    const url = base ? `${base}/api/packages` : `/api/packages`;
+    const res = await fetch(url, { cache: 'no-store' });
+    const json = await res.json();
+    const list: UIPackage[] = Array.isArray(json?.packages) ? json.packages : [];
+    const categories: UICategory[] = Array.isArray(json?.categories) ? json.categories : [];
+
+    // Choose main tabs: prefer 'head-spa' and 'beauty' if present
+    const preferred = ['head-spa', 'beauty'];
+    const preferredCats = preferred
+      .map((slug) => categories.find((c) => c.slug === slug))
+      .filter((c): c is UICategory => Boolean(c));
+    const extras = categories.filter(
+      (c) => !preferredCats.some((p) => p.slug === c.slug)
+    );
+    const main = [...preferredCats, ...extras].slice(0, 2);
+    data = main.map((c) => ({ id: c.slug, label: c.name, services: [] }));
+
+    const mapToService = (p: UIPackage, cat: string) => ({
+      id: p.id,
+      title: p.name,
+      description: p.description,
+      price: String(p.price.toLocaleString('en-IN')),
+      duration: typeof p.duration === 'number' ? `${p.duration} Minutes` : '60 Minutes',
+      image: p.image || '/assets/images/1.jpg',
+      imageAlt: p.name,
+      category: cat,
+    });
+    for (const p of list) {
+      const catSlug = p.category?.parent?.slug || p.category?.slug;
+      if (!catSlug) continue;
+      const idx = data.findIndex(d => d.id === catSlug);
+      if (idx !== -1) data[idx].services.push(mapToService(p, catSlug));
+    }
+
+    // Fallback: if no categories or no services were populated, derive categories from packages
+    const allServicesCount = data.reduce((sum, c) => sum + c.services.length, 0);
+    if (data.length === 0 || allServicesCount === 0) {
+      type Service = {
+        id: string;
+        title: string;
+        description: string;
+        price: string;
+        duration: string;
+        image: string;
+        imageAlt: string;
+        category: string;
+      };
+      const buckets = new Map<string, { id: string; label: string; services: Service[] }>();
+      for (const p of list) {
+        const slug = p.category?.parent?.slug || p.category?.slug;
+        if (!slug) continue;
+        const label = (p.category?.parent?.name || (p as UIPackage & { category?: { name?: string } }).category?.name || slug) as string;
+        if (!buckets.has(slug)) buckets.set(slug, { id: slug, label, services: [] });
+        buckets.get(slug)!.services.push(mapToService(p, slug));
+      }
+      const ordered = [
+        ...preferred
+          .map((slug) => buckets.get(slug))
+          .filter((b): b is { id: string; label: string; services: Service[] } => Boolean(b)),
+        ...Array.from(buckets.values()).filter(
+          (b) => !preferred.includes(b.id)
+        ),
+      ];
+      data = ordered.slice(0, 2);
+    }
+  } catch {
+    // keep empty data on failure
+  }
+
   return (
     <div className="flex flex-col w-full relative overflow-hidden">
       {/* Background Image - Always at the bottom */}
@@ -44,7 +124,7 @@ const HomePage = () => {
 
       <SecanderySection />
 
-      <PackagesSection />
+      <PackagesSection data={data} />
 
       <VideoSection />
 
@@ -57,6 +137,6 @@ const HomePage = () => {
       <ContactSection />
     </div>
   );
-};
+}
 
 export default HomePage;

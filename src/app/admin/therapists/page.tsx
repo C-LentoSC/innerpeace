@@ -11,6 +11,8 @@ interface Therapist {
   email: string | null;
   image?: string | null;
   completedBookings?: number;
+  title?: string | null;
+  experienceYears?: number | null;
 }
 
 interface TherapistPayload {
@@ -18,6 +20,8 @@ interface TherapistPayload {
   email: string;
   mobileNumber?: string;
   image?: string | null;
+  title?: string | null;
+  experienceYears?: number | null;
 }
 
 export default function TherapistsPage() {
@@ -32,6 +36,9 @@ export default function TherapistsPage() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [experienceYears, setExperienceYears] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
 
   const isEdit = useMemo(() => Boolean(editId), [editId]);
 
@@ -50,6 +57,23 @@ export default function TherapistsPage() {
     }
   }
 
+  async function onFileSelected(file: File) {
+    try {
+      setUploading(true);
+      const form = new FormData();
+      form.append("file", file);
+      if (imageUrl) form.append("oldPath", imageUrl);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      if (!res.ok) throw new Error("Upload failed");
+      const j = (await res.json()) as { url: string };
+      setImageUrl(j.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, []);
@@ -60,6 +84,8 @@ export default function TherapistsPage() {
     setEmail("");
     setMobile("");
     setImageUrl("");
+    setTitle("");
+    setExperienceYears("");
     setShowForm(true);
   }
 
@@ -69,6 +95,8 @@ export default function TherapistsPage() {
     setEmail(t.email || "");
     setMobile("");
     setImageUrl(t.image || "");
+    setTitle(t.title || "");
+    setExperienceYears(t.experienceYears ? String(t.experienceYears) : "");
     setShowForm(true);
   }
 
@@ -85,6 +113,8 @@ export default function TherapistsPage() {
         email,
         mobileNumber: mobile || undefined,
         image: imageUrl || undefined,
+        title: title || undefined,
+        experienceYears: experienceYears ? Number(experienceYears) : undefined,
       };
       let res: Response;
       if (isEdit && editId) {
@@ -192,44 +222,93 @@ export default function TherapistsPage() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-card/95 border border-border/50 p-5 space-y-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-card/95 border border-border/50 p-5 space-y-4">
             <div className="text-lg font-semibold">{isEdit ? "Edit" : "Add"} Therapist</div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Name</label>
-                <input
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Therapist name"
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Form */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Name</label>
+                  <input
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Therapist name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Email</label>
+                  <input
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Mobile</label>
+                  <input
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Title</label>
+                  <input
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Founder of Inner Peace / Senior Therapist"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Experience (years)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
+                    value={experienceYears}
+                    onChange={(e) => setExperienceYears(e.target.value)}
+                    placeholder="e.g. 10"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Profile Image</label>
+                  <div className="mt-1 flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void onFileSelected(f);
+                      }}
+                      className="block w-full text-sm text-muted-foreground file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-glass-card file:text-foreground hover:file:bg-glass-card/80"
+                    />
+                    {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </div>
+                  {imageUrl && (
+                    <div className="text-xs text-muted-foreground mt-1 truncate">Uploaded: {imageUrl}</div>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Email</label>
-                <input
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@example.com"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Mobile</label>
-                <input
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Avatar URL</label>
-                <input
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-background/50 border border-border/50"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://..."
-                />
+
+              {/* Live Card Preview */}
+              <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
+                <div className="relative aspect-[4/5]">
+                  {imageUrl ? (
+                    <Image src={imageUrl} alt={name || "Therapist"} fill className="object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-glass-card text-muted-foreground">No image</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-forest/80 via-dark-forest/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                    <h3 className="text-lg font-medium mb-1">{name || "Therapist Name"}</h3>
+                    <p className="text-sm text-warm-gray mb-2">{title || "Therapist"}</p>
+                    <p className="text-sm text-forest-green">{experienceYears ? `${experienceYears} years` : ""}</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex gap-2 pt-2">

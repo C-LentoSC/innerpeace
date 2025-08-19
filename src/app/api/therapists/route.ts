@@ -72,6 +72,8 @@ export async function GET(request: NextRequest) {
         lastName: true,
         email: true,
         image: true,
+        title: true,
+        experienceYears: true,
         _count: {
           select: {
             therapistBookings: {
@@ -92,6 +94,8 @@ export async function GET(request: NextRequest) {
       name: therapist.name || `${therapist.firstName || ""} ${therapist.lastName || ""}`.trim(),
       email: therapist.email,
       image: therapist.image,
+      title: therapist.title ?? null,
+      experienceYears: therapist.experienceYears ?? null,
       completedBookings: therapist._count.therapistBookings,
       rating: 4.5 + Math.random() * 0.5,
       specialties: ["Massage Therapy", "Aromatherapy"],
@@ -111,13 +115,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, firstName, lastName, email, mobileNumber, image } = body as {
+    const { name, firstName, lastName, email, mobileNumber, image, title, experienceYears } = body as {
       name?: string;
       firstName?: string;
       lastName?: string;
       email?: string;
       mobileNumber?: string;
       image?: string;
+      title?: string;
+      experienceYears?: number;
     };
 
     if (!email || !(name || firstName || lastName)) {
@@ -132,9 +138,11 @@ export async function POST(request: NextRequest) {
         email,
         mobileNumber: mobileNumber || undefined,
         image: image || undefined,
+        title: title || undefined,
+        experienceYears: typeof experienceYears === "number" ? experienceYears : undefined,
         role: "ADMIN",
       },
-      select: { id: true, name: true, firstName: true, lastName: true, email: true, mobileNumber: true, image: true, role: true },
+      select: { id: true, name: true, firstName: true, lastName: true, email: true, mobileNumber: true, image: true, title: true, experienceYears: true, role: true },
     });
 
     return NextResponse.json(created, { status: 201 });
@@ -148,7 +156,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, firstName, lastName, email, mobileNumber, image, role } = body as {
+    const { id, name, firstName, lastName, email, mobileNumber, image, title, experienceYears, role } = body as {
       id: string;
       name?: string;
       firstName?: string;
@@ -156,6 +164,8 @@ export async function PUT(request: NextRequest) {
       email?: string;
       mobileNumber?: string;
       image?: string;
+      title?: string;
+      experienceYears?: number;
       role?: "ADMIN" | "SUPERADMIN";
     };
 
@@ -170,9 +180,11 @@ export async function PUT(request: NextRequest) {
         email: email ?? undefined,
         mobileNumber: mobileNumber ?? undefined,
         image: image ?? undefined,
+        title: title ?? undefined,
+        experienceYears: typeof experienceYears === "number" ? experienceYears : undefined,
         role: role ?? undefined,
       },
-      select: { id: true, name: true, firstName: true, lastName: true, email: true, mobileNumber: true, image: true, role: true },
+      select: { id: true, name: true, firstName: true, lastName: true, email: true, mobileNumber: true, image: true, title: true, experienceYears: true, role: true },
     });
 
     return NextResponse.json(updated);

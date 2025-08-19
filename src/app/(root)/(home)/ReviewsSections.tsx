@@ -14,6 +14,14 @@ interface Review {
   avatar: string;
 }
 
+// API types
+interface ApiReview {
+  id: string;
+  comment: string;
+  rating: number;
+  user?: { name?: string | null; image?: string | null; address?: string | null } | null;
+}
+
 // Constants
 const ANIMATION_CONFIG = {
   duration: {
@@ -29,8 +37,8 @@ const ANIMATION_CONFIG = {
   transitionDelay: 500,
 } as const;
 
-// Reviews data
-const REVIEWS_DATA: Review[] = [
+// Fallback reviews (used if API has no data)
+const DEFAULT_REVIEWS: Review[] = [
   {
     id: 1,
     text: "The Japanese head massage here was nothing short of magical. From the moment I stepped in, I was enveloped in calm — soft music, warm lighting, and the scent of essential oils set the mood. The therapist's technique was so gentle yet deeply effective; I could feel the tension in my scalp and shoulders just dissolve. I left feeling lighter, more balanced, and truly at peace. It's more than a treatment — it's a journey.",
@@ -73,9 +81,10 @@ const ReviewsSections = () => {
   // State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>(DEFAULT_REVIEWS);
 
   // Current review data
-  const currentReview = REVIEWS_DATA[currentIndex];
+  const currentReview = reviews[currentIndex] || DEFAULT_REVIEWS[currentIndex % DEFAULT_REVIEWS.length];
 
   // GSAP scroll animations
   const setupAnimations = useCallback(() => {
@@ -155,14 +164,38 @@ const ReviewsSections = () => {
     return cleanup;
   }, [setupAnimations]);
 
+  // Fetch reviews from API and map to UI shape
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/reviews', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch reviews');
+        const apiReviews: ApiReview[] = await res.json();
+        const mapped: Review[] = (apiReviews || []).map((r) => ({
+          id: Number.isNaN(Number(r.id)) ? Date.now() : Number(r.id),
+          text: r.comment,
+          author: r.user?.name || 'Anonymous',
+          location: r.user?.address || '',
+          avatar: r.user?.image || '/assets/images/user.jpg',
+        }));
+        if (!cancelled && mapped.length > 0) setReviews(mapped);
+      } catch {
+        // keep defaults on failure
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // Auto-slide effect
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isAnimating) {
         setIsAnimating(true);
         setTimeout(() => {
+          const length = reviews.length > 0 ? reviews.length : DEFAULT_REVIEWS.length;
           setCurrentIndex((prevIndex) =>
-            prevIndex === REVIEWS_DATA.length - 1 ? 0 : prevIndex + 1
+            prevIndex === length - 1 ? 0 : prevIndex + 1
           );
           setIsAnimating(false);
         }, ANIMATION_CONFIG.transitionDelay);
@@ -170,7 +203,7 @@ const ReviewsSections = () => {
     }, ANIMATION_CONFIG.slideInterval);
 
     return () => clearInterval(interval);
-  }, [isAnimating]);
+  }, [isAnimating, reviews.length]);
 
   // Manual navigation
   const goToSlide = useCallback((index: number) => {
@@ -264,7 +297,7 @@ const ReviewsSections = () => {
 
               {/* Slider Navigation Dots */}
               <div className="flex justify-center mt-8 sm:mt-10 md:mt-12 gap-2 sm:gap-3">
-                {REVIEWS_DATA.map((_, index) => (
+                {(reviews.length > 0 ? reviews : DEFAULT_REVIEWS).map((r, index) => (
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
@@ -273,7 +306,7 @@ const ReviewsSections = () => {
                         ? "bg-amber-200 w-6 sm:w-8"
                         : "bg-amber-200/30 w-2 hover:bg-amber-200/50"
                     }`}
-                    aria-label={`Go to review ${index + 1} by ${REVIEWS_DATA[index].author}`}
+                    aria-label={`Go to review ${index + 1} by ${r.author}`}
                   />
                 ))}
               </div>
