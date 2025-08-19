@@ -50,8 +50,9 @@ const SignInContent = () => {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        // Redirect to home page or dashboard
-        router.push("/");
+        // Redirect to callback URL or home page
+        const callbackUrl = searchParams.get("callbackUrl") || "/";
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch {
@@ -66,8 +67,9 @@ const SignInContent = () => {
     setError("");
     
     try {
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
       await signIn("google", {
-        callbackUrl: "/",
+        callbackUrl,
       });
     } catch {
       setError("Failed to sign in with Google");

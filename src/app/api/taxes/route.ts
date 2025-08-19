@@ -1,6 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/prisma";
 import { auth } from "@/auth";
+import { PrismaClient } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
+
+// Type definitions for Tax model
+interface Tax {
+  id: string;
+  name: string;
+  percentage: Decimal;
+  description: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface TaxCreateInput {
+  name: string;
+  percentage: number;
+  description?: string | null;
+  isActive?: boolean;
+}
+
+// Type-safe Prisma client extension for tax operations
+type PrismaWithTax = PrismaClient & {
+  tax: {
+    findMany: (args?: {
+      where?: { isActive?: boolean };
+      orderBy?: { createdAt?: "desc" | "asc" };
+    }) => Promise<Tax[]>;
+    create: (args: { data: TaxCreateInput }) => Promise<Tax>;
+    update: (args: { 
+      where: { id: string };
+      data: Partial<Omit<TaxCreateInput, 'name'>> & { name?: string };
+    }) => Promise<Tax>;
+    delete: (args: { where: { id: string } }) => Promise<Tax>;
+  };
+};
 
 // GET /api/taxes - Get all taxes
 export async function GET(request: NextRequest) {
@@ -10,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const where = activeOnly ? { isActive: true } : {};
 
-    const taxes = await (prisma as any).tax.findMany({
+    const taxes = await (prisma as PrismaWithTax).tax.findMany({
       where,
       orderBy: {
         createdAt: "desc",
@@ -46,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tax = await (prisma as any).tax.create({
+    const tax = await (prisma as PrismaWithTax).tax.create({
       data: {
         name,
         percentage: parseFloat(percentage),
@@ -81,7 +117,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Tax ID is required" }, { status: 400 });
     }
 
-    const tax = await (prisma as any).tax.update({
+    const tax = await (prisma as PrismaWithTax).tax.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
@@ -117,7 +153,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Tax ID is required" }, { status: 400 });
     }
 
-    await (prisma as any).tax.delete({
+    await (prisma as PrismaWithTax).tax.delete({
       where: { id },
     });
 

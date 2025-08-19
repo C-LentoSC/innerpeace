@@ -34,7 +34,7 @@ type Tax = {
 
 function CheckoutContent() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
 
   const [pkg, setPackage] = useState<Package | null>(null);
@@ -58,6 +58,16 @@ function CheckoutContent() {
   const start = searchParams.get("start");
   const end = searchParams.get("end");
   const duration = searchParams.get("duration");
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (status === "loading") return; // Still loading
+    if (!session) {
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/signin?callbackUrl=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     if (session?.user?.email) {
@@ -179,12 +189,26 @@ function CheckoutContent() {
     }
   };
 
-  if (loading) {
+  if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary mx-auto" />
-          <p className="text-muted-foreground">Loading your booking details...</p>
+          <p className="text-muted-foreground">
+            {status === "loading" ? "Checking authentication..." : "Loading your booking details..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (user will be redirected)
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary mx-auto" />
+          <p className="text-muted-foreground">Redirecting to sign in...</p>
         </div>
       </div>
     );
