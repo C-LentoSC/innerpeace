@@ -19,19 +19,19 @@ interface ServiceCard {
 const serviceCards: ServiceCard[] = [
   {
     id: "japanese-head-massage",
-    title: "Japanese Head Massage for Ultra Relaxation",
+    title: "Japanese Head Spa & Relaxation",
     image: "/assets/images/2.jpg",
-    alt: "Japanese Head Massage for Ultra Relaxation",
+    alt: "Japanese Head Spa & Relaxation",
     description:
-      "Experience the profound benefits of our special Japanese head massage, an ancient wellness practice designed to deeply relax the mind and body. This therapeutic treatment employs precise, rhythmic techniques focused on the scalp, neck, and shoulders to relieve tension, improve circulation, and stimulate energy flow. Enhanced with warm, nourishing oils and calming aromatherapy, the massage not only promotes healthier hair and scalp but also eases mental fatigue and stress, leaving you with a serene sense of balance and rejuvenation. Rooted in centuries-old Japanese traditions, this luxurious ritual offers a holistic escape that nurtures your physical well-being.",
+      "Experience the profound benefits of our special Japanese head spa, an ancient wellness practice designed to deeply relax the mind and body. This therapeutic treatment employs precise, rhythmic techniques focused on the scalp, neck, and shoulders to relieve tension, improve circulation, and stimulate energy flow. Enhanced with warm, nourishing oils and calming aromatherapy, the spa not only promotes healthier hair and scalp but also eases mental fatigue and stress, leaving you with a serene sense of balance and rejuvenation. Rooted in centuries-old Japanese traditions, this luxurious ritual offers a holistic escape that nurtures your physical well-being.",
   },
   {
     id: "luxury-spa-facial",
-    title: "Luxury Spa Facial for Timeless Beauty",
+    title: "Beauty Care Nails, Lashes & Brows",
     image: "/assets/images/3.jpg",
-    alt: "Luxury Spa Facial for Timeless Beauty",
+    alt: "Beauty Care Nails, Lashes & Brows",
     description:
-      "Experience the profound benefits of our Signature Glow Facial, a luxurious ritual designed to rejuvenate the skin and calm the senses. This treatment combines precise, rhythmic techniques with nutrient-rich botanicals to cleanse, hydrate, and restore balance. Gentle exfoliation smooths skin texture, while a soothing facial massage boosts circulation, promotes lymphatic flow, and enhances natural radiance. Enhanced with warm masks and calming aromatherapy, it revitalizes tired skin, eases tension, and reduces stress. Rooted in holistic skincare principles, this indulgent experience nurtures both beauty and overall well-being, leaving you refreshed and glowing.",
+      "Experience the profound benefits of our Beauty Care Nails, Lashes & Brows service, a luxurious ritual designed to enhance your natural beauty and promote relaxation. This treatment combines precise, rhythmic techniques with high-quality products to nourish and revitalize your nails, lashes, and brows. Enjoy a soothing atmosphere as our skilled technicians provide personalized care, ensuring that you leave feeling refreshed and confident. Rooted in holistic beauty principles, this indulgent experience nurtures both your appearance and overall well-being.",
   },
 ];
 
