@@ -23,7 +23,7 @@ const serviceCards: ServiceCard[] = [
     image: "/assets/images/2.jpg",
     alt: "Japanese Head Spa & Relaxation",
     description:
-      "Experience the profound benefits of our special Japanese head spa, an ancient wellness practice designed to deeply relax the mind and body. This therapeutic treatment employs precise, rhythmic techniques focused on the scalp, neck, and shoulders to relieve tension, improve circulation, and stimulate energy flow. Enhanced with warm, nourishing oils and calming aromatherapy, the spa not only promotes healthier hair and scalp but also eases mental fatigue and stress, leaving you with a serene sense of balance and rejuvenation. Rooted in centuries-old Japanese traditions, this luxurious ritual offers a holistic escape that nurtures your physical well-being.",
+      "Immerse yourself in the ancient art of Japanese Head Spa – a soothing ritual designed to release stress, improve scalp health, and awaken inner balance. Experience deep relaxation that refreshes your mind, restores your spirit, and leaves you glowing from within.",
   },
   {
     id: "luxury-spa-facial",
@@ -31,7 +31,7 @@ const serviceCards: ServiceCard[] = [
     image: "/assets/images/3.jpg",
     alt: "Beauty Care Nails, Lashes & Brows",
     description:
-      "Experience the profound benefits of our Beauty Care Nails, Lashes & Brows service, a luxurious ritual designed to enhance your natural beauty and promote relaxation. This treatment combines precise, rhythmic techniques with high-quality products to nourish and revitalize your nails, lashes, and brows. Enjoy a soothing atmosphere as our skilled technicians provide personalized care, ensuring that you leave feeling refreshed and confident. Rooted in holistic beauty principles, this indulgent experience nurtures both your appearance and overall well-being.",
+      "Immerse yourself in the ancient art of Japanese Head Spa – a soothing ritual designed to release stress, improve scalp health, and awaken inner balance. Experience deep relaxation that refreshes your mind, restores your spirit, and leaves you glowing from within.",
   },
 ];
 

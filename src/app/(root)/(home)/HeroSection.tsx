@@ -246,9 +246,7 @@ const HeroSection = () => {
               Step into a sanctuary where tranquility meets elegance.
             </span>
             <span className="text-amber-200/80">
-              At Inner Peace Spa, we combine ancient rituals with modern
-              techniques to deliver a truly luxurious and transformative
-              experience.
+              At Inner Peace, we combine the healing touch of Head Spa with bespoke beauty services for a luxurious and transformative experience.
             </span>
             <span className="block mt-2 text-zinc-400/80 text-sm sm:text-base lg:text-lg italic">
               Let us help you unwind, restore, and glow - because you deserve
