@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/Button";
-import { Search, Clock } from "lucide-react";
+import { Search, Clock, ChevronDown } from 'lucide-react';
 import { CURRENCY } from "@/constants/data";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -30,12 +30,23 @@ const PackagesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   type UIPackage = { id: string; name: string; description: string; price: number; duration?: number; isActive?: boolean; status?: string; image?: string | null; categoryId?: string | null; category?: { id: string; name: string; slug: string; parent?: { id: string; name: string; slug: string } | null } | null };
-  type UICategory = { id: string; name: string; slug: string; color?: string | null; packagesCount?: number };
+  type UICategory = { 
+    id: string; 
+    name: string; 
+    slug: string; 
+    color?: string | null; 
+    packagesCount?: number;
+    level?: number;
+    children?: UICategory[];
+  };
   const [packagesData, setPackagesData] = useState<UIPackage[]>([]);
   const [categoriesData, setCategoriesData] = useState<UICategory[]>([]);
-  // Subcategory list for the selected main category (fetched dynamically)
+  // Subcategory list for the selected main category (fetched dynamically with nesting support)
   const [subcategories, setSubcategories] = useState<UICategory[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
+  // Track expanded subcategories for nested display
+  const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { status } = useSession();
   const router = useRouter();
 
@@ -203,16 +214,17 @@ const PackagesPage = () => {
   );
   const packagesPerPage = 10;
   
-  // Fetch subcategories when a main category tab is active
+  // Fetch subcategories when a main category tab is active (with nested support)
   useEffect(() => {
     const controller = new AbortController();
     async function loadSubs() {
       try {
-        const res = await fetch(`/api/categories/${activeCategory}/subcategories`, { signal: controller.signal });
+        const res = await fetch(`/api/categories/${activeCategory}/subcategories?nested=true`, { signal: controller.signal });
         if (!res.ok) throw new Error('Failed to load subcategories');
         const subs: UICategory[] = await res.json();
         setSubcategories(subs);
         setSelectedSubcategory('all');
+        setExpandedSubcategories(new Set()); // Reset expanded state
       } catch {
         if (!controller.signal.aborted) setSubcategories([]);
       }
@@ -221,12 +233,127 @@ const PackagesPage = () => {
     return () => controller.abort();
   }, [activeCategory]);
 
+  // Flatten nested subcategories for easier filtering (if needed in future)
+  // const flattenSubcategories = (subs: UICategory[]): UICategory[] => {
+  //   let result: UICategory[] = [];
+  //   subs.forEach(sub => {
+  //     result.push(sub);
+  //     if (sub.children && sub.children.length > 0) {
+  //       result = result.concat(flattenSubcategories(sub.children));
+  //     }
+  //   });
+  //   return result;
+  // };
+
+  // const allSubcategories = flattenSubcategories(subcategories);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setExpandedSubcategories(new Set());
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Toggle subcategory expansion (close others when opening new one)
+  const toggleSubcategoryExpanded = (subcategoryId: string) => {
+    setExpandedSubcategories(prev => {
+      const newSet = new Set<string>();
+      // If the clicked item is not currently expanded, expand it (and close others)
+      if (!prev.has(subcategoryId)) {
+        newSet.add(subcategoryId);
+      }
+      // If the clicked item is currently expanded, close it (newSet remains empty)
+      return newSet;
+    });
+  };
+
+  // Render nested subcategory tree with horizontal dropdown functionality
+  const renderSubcategoryTree = (subs: UICategory[], depth: number = 0): React.ReactNode => {
+    return subs.map((sub) => (
+      <div key={sub.id} className="relative inline-block">
+        <div className="flex items-center gap-1">
+          {/* Subcategory button */}
+          <button
+            onClick={() => { 
+              setSelectedSubcategory(sub.slug); 
+              setCurrentPage(1);
+              // Toggle expansion for subcategories with children
+              if (sub.children && sub.children.length > 0) {
+                toggleSubcategoryExpanded(sub.id);
+              }
+            }}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1 ${
+              selectedSubcategory === sub.slug ? 'bg-gradient-to-r from-warm-gold to-soft-yellow text-background' : 'bg-card text-foreground hover:bg-muted'
+            }`}
+          >
+            {sub.name}
+            {/* Dropdown arrow for subcategories with children */}
+            {sub.children && sub.children.length > 0 && (
+              <ChevronDown 
+                className={`w-3 h-3 transition-transform duration-200 ${
+                  expandedSubcategories.has(sub.id) ? 'rotate-180' : ''
+                }`} 
+              />
+            )}
+          </button>
+        </div>
+        
+        {/* Horizontal dropdown for children */}
+        {sub.children && sub.children.length > 0 && expandedSubcategories.has(sub.id) && (
+          <div className="absolute top-full left-0 mt-2 z-20 bg-background/95 backdrop-blur-sm border border-border/20 rounded-lg shadow-xl p-3 min-w-max animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="flex flex-wrap gap-2 max-w-80">
+              {renderSubcategoryTree(sub.children, depth + 1)}
+            </div>
+            {/* Small arrow pointer */}
+            <div className="absolute -top-1 left-4 w-2 h-2 bg-background border-l border-t border-border/20 transform rotate-45"></div>
+          </div>
+        )}
+      </div>
+    ));
+  };
+
   // Filter packages based on main category (by parent.slug) and optional subcategory, plus search
   const filteredPackages = packagesData.filter((pkg) => {
     const matchesCategory = pkg.category?.parent?.slug === activeCategory;
     const matchesSubcategory = selectedSubcategory === 'all'
       ? true
-      : pkg.category?.slug === selectedSubcategory;
+      : (() => {
+          // Check if package's category slug matches selected subcategory
+          if (pkg.category?.slug === selectedSubcategory) return true;
+          
+          // Check if package's category is a descendant of selected subcategory
+          const findDescendants = (cats: UICategory[], targetSlug: string): string[] => {
+            let result: string[] = [];
+            cats.forEach(cat => {
+              if (cat.slug === targetSlug && cat.children) {
+                const collectSlugs = (children: UICategory[]): string[] => {
+                  let slugs: string[] = [];
+                  children.forEach(child => {
+                    slugs.push(child.slug);
+                    if (child.children) {
+                      slugs = slugs.concat(collectSlugs(child.children));
+                    }
+                  });
+                  return slugs;
+                };
+                result = collectSlugs(cat.children);
+              } else if (cat.children) {
+                result = result.concat(findDescendants(cat.children, targetSlug));
+              }
+            });
+            return result;
+          };
+          
+          const descendants = findDescendants(subcategories, selectedSubcategory);
+          return descendants.includes(pkg.category?.slug || '');
+        })();
     const matchesSearch =
       pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (pkg.description || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -322,9 +449,9 @@ const PackagesPage = () => {
               ))}
             </div>
 
-            {/* Subcategory chips (dynamic) */}
+            {/* Subcategory chips (dynamic with horizontal nested dropdowns) */}
             {activeCategory && (
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-start">
+              <div ref={dropdownRef} className="relative flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-start">
                 <button
                   key="all"
                   onClick={() => { setSelectedSubcategory('all'); setCurrentPage(1); }}
@@ -334,17 +461,7 @@ const PackagesPage = () => {
                 >
                   All
                 </button>
-                {subcategories.map((sub) => (
-                  <button
-                    key={sub.slug}
-                    onClick={() => { setSelectedSubcategory(sub.slug); setCurrentPage(1); }}
-                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      selectedSubcategory === sub.slug ? 'bg-gradient-to-r from-warm-gold to-soft-yellow text-background' : 'bg-card text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    {sub.name}
-                  </button>
-                ))}
+                {renderSubcategoryTree(subcategories)}
               </div>
             )}
 
