@@ -19,6 +19,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { CURRENCY } from "@/constants/data";
 
 type Booking = {
   id: string;
@@ -367,7 +368,7 @@ export default function AccountBookingsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-primary">
-                        ₹{Number(booking.price).toLocaleString("en-IN")}
+                        {CURRENCY.symbol}{Number(booking.price).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">Total Amount</p>
                     </div>

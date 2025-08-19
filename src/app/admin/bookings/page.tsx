@@ -21,6 +21,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { CURRENCY } from "@/constants/data";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import DatePicker from "react-datepicker";
@@ -525,7 +526,7 @@ export default function BookingsPage() {
                   <Package className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">₹{bookings.reduce((sum, b) => sum + Number(b.price), 0).toLocaleString('en-IN')}</p>
+                  <p className="text-2xl font-bold">{CURRENCY.symbol}{bookings.reduce((sum, b) => sum + Number(b.price), 0).toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
                 </div>
               </div>
@@ -714,7 +715,7 @@ export default function BookingsPage() {
                     
                     <div className="text-right">
                       <p className="text-2xl font-bold text-primary">
-                        ₹{Number(booking.price).toLocaleString("en-IN")}
+                        {CURRENCY.symbol}{Number(booking.price).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">Total Amount</p>
                     </div>

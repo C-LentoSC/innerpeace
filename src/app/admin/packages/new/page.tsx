@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { CURRENCY } from '@/constants/data';
 
 
 export default function NewPackagePage() {
@@ -57,7 +58,7 @@ export default function NewPackagePage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Price (₹)
+                Price ({CURRENCY.symbol})
               </label>
               <input
                 type="number"

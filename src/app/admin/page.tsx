@@ -1,5 +1,6 @@
 import { Users, Calendar, Package, TrendingUp, Clock, Star, DollarSign } from "lucide-react";
 import { prisma } from "@/prisma";
+import { CURRENCY } from "@/constants/data";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -14,12 +15,8 @@ const getStatusColor = (status: string) => {
   }
 };
 
-function inr(amount: number) {
-  try {
-    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount || 0);
-  } catch {
-    return `₹${Math.round(amount || 0).toLocaleString("en-IN")}`;
-  }
+function formatCurrency(amount: number) {
+  return `${CURRENCY.symbol}${Math.round(amount || 0).toLocaleString()}`;
 }
 
 export default async function AdminDashboard() {
@@ -66,7 +63,7 @@ export default async function AdminDashboard() {
     },
     {
       name: "Monthly Revenue",
-      value: inr(Number(monthRevenueAgg._sum.price || 0)),
+      value: formatCurrency(Number(monthRevenueAgg._sum.price || 0)),
       change: "+-",
       icon: DollarSign,
     },

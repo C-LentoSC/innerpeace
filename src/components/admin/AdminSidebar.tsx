@@ -13,6 +13,7 @@ import {
   Image,
   X,
   FolderOpen,
+  Percent,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ const navigation = [
   { name: "Gallery", href: "/admin/gallery", icon: Image },
   { name: "Reviews", href: "/admin/reviews", icon: MessageSquare },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Taxes", href: "/admin/taxes", icon: Percent },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

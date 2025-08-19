@@ -4,19 +4,17 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/Button";
+import { CURRENCY } from "@/constants/data";
 import { 
   User, 
   Mail, 
   Phone, 
   MessageSquare, 
   CreditCard, 
-  Building2, 
-  Star,
   Clock,
   Calendar,
   Shield,
-  CheckCircle,
-  Users
+  CheckCircle
 } from "lucide-react";
 
 type Package = {
@@ -27,14 +25,11 @@ type Package = {
   durationInMinutes?: number;
 };
 
-type Therapist = {
+type Tax = {
   id: string;
   name: string;
-  email: string;
-  image?: string;
-  rating: number;
-  completedBookings: number;
-  specialties: string[];
+  percentage: number;
+  isActive: boolean;
 };
 
 function CheckoutContent() {
@@ -43,20 +38,18 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
 
   const [pkg, setPackage] = useState<Package | null>(null);
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [taxes, setTaxes] = useState<Tax[]>([]);
   const [loading, setLoading] = useState(true);
-  const [therapistsLoading, setTherapistsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userPhone, setUserPhone] = useState("");
   const [notes, setNotes] = useState("");
-  const [selectedTherapist, setSelectedTherapist] = useState<string>("");
   const [preferredGender, setPreferredGender] = useState<"any" | "male" | "female">("any");
   const [specialRequests, setSpecialRequests] = useState("");
 
-  const [paymentMethod, setPaymentMethod] = useState<"pay_now" | "pay_at_branch">("pay_now");
+  const [paymentMethod, setPaymentMethod] = useState<"pay_now" | "pay_half">("pay_now");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const packageId = searchParams.get("packageId");
@@ -67,12 +60,58 @@ function CheckoutContent() {
   const duration = searchParams.get("duration");
 
   useEffect(() => {
-    if (session?.user) {
+    if (session?.user?.email) {
       setUserName(session.user.name || "");
-      setUserEmail(session.user.email || "");
-      // if we have profile mobile number via a custom token or future fetch, hydrate later
+      setUserEmail(session.user.email);
     }
   }, [session]);
+
+  // Fetch taxes
+  useEffect(() => {
+    const fetchTaxes = async () => {
+      try {
+        const response = await fetch("/api/taxes");
+        if (response.ok) {
+          const taxData = await response.json();
+          setTaxes(taxData.filter((tax: Tax) => tax.isActive));
+        }
+      } catch (error) {
+        console.error("Error fetching taxes:", error);
+      }
+    };
+
+    fetchTaxes();
+  }, []);
+
+  // Calculate tax amounts
+  const calculateTaxes = () => {
+    if (!pkg || !taxes || taxes.length === 0) return { taxAmount: 0, totalWithTax: pkg?.price || 0, taxes: [] };
+    
+    const basePrice = Number(pkg.price);
+    let totalTaxAmount = 0;
+    const taxBreakdown: { name: string; percentage: number; amount: number }[] = [];
+    
+    taxes.forEach((tax) => {
+      const taxAmount = Math.round((basePrice * Number(tax.percentage)) / 100);
+      totalTaxAmount += taxAmount;
+      taxBreakdown.push({
+        name: tax.name,
+        percentage: Number(tax.percentage),
+        amount: taxAmount
+      });
+    });
+    
+    const totalWithTax = basePrice + totalTaxAmount;
+    
+    return {
+      taxAmount: totalTaxAmount,
+      totalWithTax,
+      taxes: taxBreakdown
+    };
+  };
+
+  const { taxAmount, totalWithTax, taxes: taxBreakdown } = calculateTaxes();
+  const finalAmount = paymentMethod === "pay_half" ? Math.round(totalWithTax / 2) : totalWithTax;
 
   useEffect(() => {
     async function load() {
@@ -97,31 +136,6 @@ function CheckoutContent() {
     load();
   }, [packageId]);
 
-  // Fetch available therapists
-  useEffect(() => {
-    async function fetchTherapists() {
-      const when = start || time;
-      if (!date || !when) return;
-      
-      try {
-        setTherapistsLoading(true);
-        const q = new URLSearchParams({ available: "true", date, time: when });
-        if (duration) q.set("duration", duration);
-        if (packageId) q.set("packageId", String(packageId));
-        const res = await fetch(`/api/therapists?${q.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setTherapists(data);
-        }
-      } catch (e) {
-        console.error("Failed to fetch therapists:", e);
-      } finally {
-        setTherapistsLoading(false);
-      }
-    }
-    fetchTherapists();
-  }, [date, time, start, duration, packageId]);
-
   const submitBooking = async () => {
     const when = start || time;
     if (!packageId || !date || !when || !userName || !userEmail || !pkg) return;
@@ -142,7 +156,6 @@ function CheckoutContent() {
           userPhone,
           notes: `${notes}${specialRequests ? `\n\nSpecial Requests: ${specialRequests}` : ''}${preferredGender !== 'any' ? `\nPreferred Gender: ${preferredGender}` : ''}`,
           paymentMethod,
-          therapistId: selectedTherapist || undefined,
         }),
       });
       if (!res.ok) {
@@ -249,7 +262,7 @@ function CheckoutContent() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    Phone Number
+                    Phone Number *
                   </label>
                   <input
                     type="tel"
@@ -257,101 +270,14 @@ function CheckoutContent() {
                     onChange={(e) => setUserPhone(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                     placeholder="+91 98765 43210"
+                    required
+                    minLength={4}
                   />
+                  {userPhone && userPhone.length < 4 && (
+                    <p className="text-sm text-red-500 mt-1">Phone number must be at least 4 digits</p>
+                  )}
                 </div>
               </div>
-            </div>
-
-            {/* Therapist Selection */}
-            <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 bg-secondary/10 rounded-full flex items-center justify-center">
-                  <Users className="h-5 w-5 text-secondary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold">Choose Your Therapist</h3>
-                  <p className="text-sm text-muted-foreground">Select from our available experts</p>
-                </div>
-              </div>
-
-              {therapistsLoading ? (
-                <div className="text-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Finding available therapists...</p>
-                </div>
-              ) : therapists.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {therapists.map((therapist) => (
-                      <label
-                        key={therapist.id}
-                        className={`relative flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
-                          selectedTherapist === therapist.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border/50 bg-background/30'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="therapist"
-                          value={therapist.id}
-                          checked={selectedTherapist === therapist.id}
-                          onChange={(e) => setSelectedTherapist(e.target.value)}
-                          className="sr-only"
-                        />
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="h-12 w-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
-                            <User className="h-6 w-6 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium">{therapist.name}</h4>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              <span>{therapist.rating.toFixed(1)}</span>
-                              <span>•</span>
-                              <span>{therapist.completedBookings} sessions</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {therapist.specialties.join(", ")}
-                            </p>
-                          </div>
-                          {selectedTherapist === therapist.id && (
-                            <CheckCircle className="h-5 w-5 text-primary" />
-                          )}
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                  <label className="flex items-center p-4 rounded-xl border-2 border-border/50 bg-background/30 cursor-pointer transition-all hover:shadow-md">
-                    <input
-                      type="radio"
-                      name="therapist"
-                      value=""
-                      checked={selectedTherapist === ""}
-                      onChange={() => setSelectedTherapist("")}
-                      className="sr-only"
-                    />
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="h-12 w-12 bg-muted/20 rounded-full flex items-center justify-center">
-                        <Users className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">No Preference</h4>
-                        <p className="text-sm text-muted-foreground">Let us assign the best available therapist</p>
-                      </div>
-                      {selectedTherapist === "" && (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  </label>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No therapists available for this time slot</p>
-                  <p className="text-sm">We&#39;ll assign the best available therapist</p>
-                </div>
-              )}
             </div>
 
             {/* Preferences */}
@@ -449,33 +375,33 @@ function CheckoutContent() {
                 </label>
 
                 <label className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === "pay_at_branch" ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/30'
+                  paymentMethod === "pay_half" ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/30'
                 }`}>
                   <input
                     type="radio"
                     name="payment"
-                    value="pay_at_branch"
-                    checked={paymentMethod === "pay_at_branch"}
-                    onChange={() => setPaymentMethod("pay_at_branch")}
+                    value="pay_half"
+                    checked={paymentMethod === "pay_half"}
+                    onChange={() => setPaymentMethod("pay_half")}
                     className="sr-only"
                   />
                   <div className="flex items-center gap-3 w-full">
-                    <Building2 className="h-6 w-6 text-primary" />
+                    <CreditCard className="h-6 w-6 text-primary" />
                     <div className="flex-1">
-                      <h4 className="font-medium">Pay at Salon</h4>
-                      <p className="text-sm text-muted-foreground">Pay during your visit</p>
+                      <h4 className="font-medium">Pay Half</h4>
+                      <p className="text-sm text-muted-foreground">Pay 50% now, 50% later</p>
                     </div>
-                    {paymentMethod === "pay_at_branch" && <CheckCircle className="h-5 w-5 text-primary" />}
+                    {paymentMethod === "pay_half" && <CheckCircle className="h-5 w-5 text-primary" />}
                   </div>
                 </label>
 
-                {paymentMethod === "pay_at_branch" && (
+                {paymentMethod === "pay_half" && (
                   <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
                       <div className="text-sm text-blue-800 dark:text-blue-200">
-                        <p className="font-medium mb-1">Pay at Branch</p>
-                        <p>You can complete the payment at our branch when you arrive. Your booking will be held and confirmed on payment.</p>
+                        <p className="font-medium mb-1">Pay Half Now</p>
+                        <p>Pay 50% of the amount now to secure your booking. The remaining 50% can be paid during your visit.</p>
                       </div>
                     </div>
                   </div>
@@ -532,32 +458,54 @@ function CheckoutContent() {
                         <span className="font-medium">{pkg.durationInMinutes} mins</span>
                       </div>
                     )}
-
-                    {selectedTherapist && (
-                      <div className="flex items-center justify-between py-2">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <User className="h-4 w-4" />
-                          <span>Therapist</span>
-                        </div>
-                        <span className="font-medium">
-                          {therapists.find(t => t.id === selectedTherapist)?.name || "Selected"}
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <hr className="border-border/50" />
                   
+                  {/* Price Breakdown */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-muted-foreground">Base Price</span>
+                      <span className="font-medium">{CURRENCY.symbol}{Number(pkg.price).toLocaleString()}</span>
+                    </div>
+                    
+                    {taxBreakdown.map((tax) => (
+                      <div key={tax.name} className="flex items-center justify-between py-1">
+                        <span className="text-muted-foreground text-sm">
+                          {tax.name} ({tax.percentage}%)
+                        </span>
+                        <span className="text-sm">+{CURRENCY.symbol}{Number(tax.amount).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    
+                    {taxAmount > 0 && (
+                      <div className="flex items-center justify-between py-1 border-t border-border/30 pt-2">
+                        <span className="font-medium">Subtotal (incl. taxes)</span>
+                        <span className="font-medium">{CURRENCY.symbol}{Number(totalWithTax).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <hr className="border-border/50" />
+                  
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-lg font-semibold">Total Amount</span>
+                    <span className="text-lg font-semibold">
+                      {paymentMethod === "pay_half" ? "Pay Now (50%)" : "Total Amount"}
+                    </span>
                     <span className="text-2xl font-bold text-primary">
-                      ₹{Number(pkg.price).toLocaleString("en-IN")}
+                      {CURRENCY.symbol}{Number(finalAmount).toLocaleString()}
                     </span>
                   </div>
+                  
+                  {paymentMethod === "pay_half" && (
+                    <div className="text-sm text-muted-foreground">
+                      Remaining {CURRENCY.symbol}{Number(totalWithTax - finalAmount).toLocaleString()} to be paid at the salon
+                    </div>
+                  )}
 
                   <Button 
                     className="w-full py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all" 
-                    disabled={isSubmitting || !date || !(time || start) || !userName || !userEmail} 
+                    disabled={isSubmitting || !date || !(time || start) || !userName || !userEmail || !userPhone || userPhone.length < 4} 
                     onClick={submitBooking}
                   >
                     {isSubmitting ? (

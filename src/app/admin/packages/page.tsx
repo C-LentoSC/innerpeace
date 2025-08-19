@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Plus, Search, Edit, Trash2, X, Package, Clock, DollarSign } from "lucide-react";
 import { Button } from "@/components/Button";
 import { fetchCategories, type Category as CategoryType } from "@/lib/api/categories";
+import { CURRENCY } from "@/constants/data";
 
 interface Package {
   id: string;
@@ -319,7 +320,7 @@ export default function PackagesPage() {
               <p className="text-sm font-medium text-muted-foreground">
                 Avg. Package Price
               </p>
-              <p className="text-2xl font-bold text-foreground">₹{avgPrice.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-foreground">{CURRENCY.symbol}{avgPrice.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -401,7 +402,7 @@ export default function PackagesPage() {
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold text-foreground">
-                      ₹{pkg.price.toLocaleString()}
+                      {CURRENCY.symbol}{pkg.price.toLocaleString()}
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -502,7 +503,7 @@ export default function PackagesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Price (₹)</label>
+                  <label className="block text-sm font-medium mb-1">Price ({CURRENCY.symbol})</label>
                   <input
                     type="number"
                     step="0.01"

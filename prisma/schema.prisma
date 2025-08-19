@@ -234,3 +234,14 @@ model Review {
   @@index([userId])
   @@index([serviceId])
 }
+
+model Tax {
+  id          String   @id @default(cuid())
+  name        String   // e.g., "GST", "VAT", "Service Tax"
+  percentage  Decimal  // e.g., 18.0 for 18%
+  isActive    Boolean  @default(true)
+  description String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

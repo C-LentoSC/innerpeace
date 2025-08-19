@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CURRENCY } from "@/constants/data";
 import {
   TrendingUp,
   TrendingDown,
@@ -101,7 +102,7 @@ export default function AnalyticsPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
               <p className="text-2xl font-bold text-foreground mt-2">
-                ₹{(data?.revenue?.current ?? 0).toLocaleString()}
+                {CURRENCY.symbol}{(data?.revenue?.current ?? 0).toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Lifetime earnings</p>
             </div>
@@ -178,7 +179,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-foreground">₹{service.revenue.toLocaleString()}</p>
+                  <p className="font-semibold text-foreground">{CURRENCY.symbol}{service.revenue.toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">Revenue</p>
                 </div>
               </div>
@@ -238,9 +239,9 @@ export default function AnalyticsPage() {
                 return (
                   <tr key={data.month} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
                     <td className="py-3 px-4 font-medium text-foreground">{data.month} 2025</td>
-                    <td className="py-3 px-4 text-foreground font-semibold">₹{data.revenue.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-foreground font-semibold">{CURRENCY.symbol}{data.revenue.toLocaleString()}</td>
                     <td className="py-3 px-4 text-muted-foreground">{data.bookings}</td>
-                    <td className="py-3 px-4 text-muted-foreground">₹{avgPerBooking.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{CURRENCY.symbol}{avgPerBooking.toLocaleString()}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center text-sm font-medium ${
                         parseFloat(growth) >= 0 ? "text-success" : "text-destructive"
